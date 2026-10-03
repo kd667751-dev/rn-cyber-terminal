@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RN-01 // CLASSIFIED TERMINAL</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  
+  <!-- CRT Overlay Effects -->
+  <div class="crt-overlay"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- Audio Toggle -->
+  <button id="audioToggle" class="audio-toggle hidden">[ SOUND: OFF ]</button>
+
+  <main id="app">
+    
+    <!-- BOOT SEQUENCE -->
+    <section id="bootSequence" class="screen active">
+      <div class="terminal-container">
+        <div id="bootText" class="terminal-text"></div>
+        <div id="bootFinal" class="hidden">
+          <div class="subject-id glitch-text" data-text="RN-01">RN-01</div>
+          <h1 class="reveal-name" id="rajNandaniTitle">RAJ NANDANI</h1>
+          <button id="enterSystemBtn" class="cyber-btn mt-8 opacity-0 transition-opacity">
+            <span>[ ENTER SYSTEM ]</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN HUB -->
+    <section id="mainHub" class="screen hidden">
+      <div class="hub-container">
+        <div class="hub-header">
+          <span class="sys-badge">SYSTEM STATUS: <span class="status-warning">UNSTABLE</span></span>
+          <span class="sys-badge right">ID: RN-01</span>
+        </div>
+        
+        <div class="nav-grid">
+          <button class="nav-btn" data-target="classifiedFile">
+            <span class="btn-bracket">[</span> ACCESS FILE <span class="btn-bracket">]</span>
+          </button>
+          <button class="nav-btn" data-target="systemLogs">
+            <span class="btn-bracket">[</span> SYSTEM LOGS <span class="btn-bracket">]</span>
+          </button>
+          <button class="nav-btn glitch-hover" id="unknownBtn" data-target="unknownSection">
+            <span class="btn-bracket">[</span> UNKNOWN <span class="btn-bracket">]</span>
+          </button>
+          <button class="nav-btn final-btn locked" id="finalAccessBtn" data-target="finalAccess">
+            <span class="btn-bracket">[</span> FINAL ACCESS <span class="btn-bracket">]</span>
+          </button>
+        </div>
+        
+        <div class="system-alerts" id="systemAlerts">
+          <!-- Dynamically populated alerts -->
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASSIFIED FILE -->
+    <section id="classifiedFile" class="screen hidden">
+      <div class="content-container dossier-border">
+        <button class="back-btn">[ RETURN ]</button>
+        <div class="dossier-header">
+          <h2>CLASSIFIED DOSSIER</h2>
+          <div class="barcode">|||| ||||| || |||||| | |||</div>
+        </div>
+        
+        <div class="dossier-body">
+          <div class="data-row"><span class="data-label">SUBJECT:</span> <span class="data-value highlight">RAJ NANDANI</span></div>
+          <div class="data-row"><span class="data-label">CODE:</span> <span class="data-value">RN-01</span></div>
+          <div class="data-row"><span class="data-label">STATUS:</span> <span class="data-value warning">ACTIVE</span></div>
+          <div class="data-row"><span class="data-label">THREAT LEVEL:</span> <span class="data-value glitch-text-small" data-text="UNKNOWN">UNKNOWN</span></div>
+          <div class="data-row"><span class="data-label">SYSTEM RESPONSE:</span> <span class="data-value danger">UNSTABLE / COMPROMISED</span></div>
+          
+          <div class="divider"></div>
+          
+          <div class="dossier-quote">
+            "Some people enter your life quietly. Somehow, they become impossible to ignore."
+          </div>
+          
+          <div class="fingerprint-scan">
+            <div class="scan-line"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SYSTEM LOGS -->
+    <section id="systemLogs" class="screen hidden">
+      <div class="content-container">
+        <button class="back-btn">[ RETURN ]</button>
+        <div class="logs-header">
+          <h2>ENCRYPTED LOGS</h2>
+          <span class="blinking-cursor">_</span>
+        </div>
+        
+        <div class="logs-terminal" id="logsTerminal">
+          <!-- Logs appear here dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- UNKNOWN (GLITCH EVENT) -->
+    <section id="unknownSection" class="screen hidden">
+      <div class="glitch-overlay" id="severeGlitch">
+        <h1 class="huge-glitch">⚠ SYSTEM ANOMALY DETECTED</h1>
+        <p class="corrupted-text">0xERR_EMOTIONAL_OVERRIDE</p>
+        <p class="glitch-message">This system was never designed for this.</p>
+        <div class="hex-dump" id="hexDump"></div>
+      </div>
+    </section>
+
+    <!-- FINAL ACCESS WARNING -->
+    <section id="finalWarning" class="screen hidden">
+      <div class="warning-container">
+        <h2 class="danger-text">⚠ WARNING</h2>
+        <p>You are about to access the only file this system was never supposed to contain.</p>
+        <div class="btn-row">
+          <button class="cyber-btn abort-btn" id="abortFinalBtn">[ ABORT ]</button>
+          <button class="cyber-btn proceed-btn" id="proceedFinalBtn">[ PROCEED ]</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL ACCESS SCENE -->
+    <section id="finalAccess" class="screen hidden final-scene">
+      <div class="particles" id="particles"></div>
+      <div class="heartbeat-line"></div>
+      <div class="final-content">
+        <h1 class="elegant-name">RAJ NANDANI</h1>
+        <p class="final-quote">"I don't really know when you became special. I just know that somewhere along the way, you did."</p>
+        <span class="final-signoff">— RN-01</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
