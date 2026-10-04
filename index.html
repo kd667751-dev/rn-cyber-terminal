@@ -234,9 +234,30 @@ body.rflick #app{animation:rf .18s steps(2)}
 #app{display:none} /* Hidden by default until auth */
 #gate button{margin-top:20px;background:transparent;border:1px solid rgba(255,42,69,.5);color:var(--red2);padding:10px 30px;font-family:var(--mono);font-size:1.1rem;cursor:pointer;letter-spacing:3px;transition:0.3s;}
 #gate button:hover{background:rgba(255,42,69,.1);box-shadow:0 0 15px var(--glow);}
+
+/* Anti-screenshot & Print prevention */
+@media print {
+  html, body { display: none !important; }
+}
+#security-overlay {
+  position: fixed; inset: 0; z-index: 99999; background: #000;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--red2); font-family: var(--mono); font-size: 1.5rem;
+  letter-spacing: 0.2em; text-align: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: 0.2s;
+  text-shadow: 0 0 15px var(--glow);
+}
+#security-overlay.active {
+  opacity: 1; pointer-events: auto;
+}
 </style>
 </head>
 <body>
+
+<div id="security-overlay">
+  [ SECURITY PROTOCOL ENGAGED ]<br><br>UNAUTHORIZED CAPTURE ATTEMPT DETECTED
+</div>
+
 
 <div id="gate">
   <p>SYSTEM LOCKED</p>
@@ -966,6 +987,34 @@ document.addEventListener('pointerdown', () => {
     }
   }
 }, {once: true});
+
+// Anti-screenshot & Security Measures
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.key === 'PrintScreen' || (e.ctrlKey && ['p','s','c','u','i'].includes(e.key.toLowerCase()))) {
+    e.preventDefault();
+    triggerSecurity();
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'PrintScreen') triggerSecurity();
+});
+
+const secOverlay = document.getElementById('security-overlay');
+function triggerSecurity() {
+  secOverlay.classList.add('active');
+  if (typeof Snd !== 'undefined' && Snd.glitch) Snd.glitch(2);
+  setTimeout(() => secOverlay.classList.remove('active'), 3000);
+}
+
+// When window loses focus (Snipping tool, backgrounding app), hide content
+window.addEventListener('blur', () => {
+  secOverlay.classList.add('active');
+});
+window.addEventListener('focus', () => {
+  secOverlay.classList.remove('active');
+});
+
 })();
 </script>
 </body>
