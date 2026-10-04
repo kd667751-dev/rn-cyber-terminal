@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     const now = Math.floor(Date.now() / 1000);
 
     if (record.expires_at < now) {
-      return res.status(401).json({ error: 'ACCESS DENIED: Code has expired.', valid: false });
+      return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
     }
 
     if (req.body.action === 'check') {
@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
     }
 
     if (record.used_count >= record.max_uses) {
-      return res.status(401).json({ error: 'ACCESS DENIED: Code usage limit exceeded.', valid: false });
+      return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
     }
 
     if (record.used_count === 0 && req.body.action !== 'check') {
