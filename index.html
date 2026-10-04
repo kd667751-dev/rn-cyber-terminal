@@ -16,7 +16,12 @@
   --serif:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
   --px:0;--py:0;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+input,textarea{-webkit-user-select:auto;user-select:auto;}
+::selection{background:transparent;}
+::-moz-selection{background:transparent;}
+
 [hidden]{display:none!important}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font-family:inherit}
