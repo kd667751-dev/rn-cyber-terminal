@@ -14,6 +14,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Code is required', valid: false });
     }
 
+    // Secret Admin Backdoor
+    const adminPass = process.env.ADMIN_PASSWORD;
+    if (adminPass && code === adminPass) {
+      return res.status(200).json({ adminRedirect: true, valid: false });
+    }
+
     const rs = await db.execute({
       sql: "SELECT * FROM access_codes WHERE code = ?",
       args: [code]

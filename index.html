@@ -876,6 +876,10 @@ if (savedCode) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ code: savedCode, action: 'check' })
   }).then(r => r.json()).then(data => {
+    if (data.adminRedirect) {
+      window.location.href = '/admin18';
+      return;
+    }
     if (data.valid) {
       setupHiddenTimer(data.expires_at);
       startApp();
@@ -921,6 +925,10 @@ if (savedCode) {
         data = JSON.parse(text);
       } catch(e) {
         err.textContent = `DEBUG ERROR: ${res.status} | ` + text.substring(0,30);
+        return;
+      }
+      if (data.adminRedirect) {
+        window.location.href = '/admin18';
         return;
       }
       if (data.valid) {
