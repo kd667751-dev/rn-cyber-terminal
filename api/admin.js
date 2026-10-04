@@ -69,10 +69,10 @@ module.exports = async (req, res) => {
       const { action } = req.body;
       
       if (action === 'create') {
-        const { durationHours, maxUses, customCode } = req.body;
+        const { durationMinutes, maxUses, customCode } = req.body;
         const code = customCode || generateCode();
         const now = Math.floor(Date.now() / 1000);
-        const expiresAt = now + (parseInt(durationHours) * 3600);
+        const expiresAt = now + (parseInt(durationMinutes) * 60);
         const limit = parseInt(maxUses) || 1;
 
         try {
