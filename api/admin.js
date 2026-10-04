@@ -72,13 +72,14 @@ module.exports = async (req, res) => {
         const { durationMinutes, maxUses, customCode } = req.body;
         const code = customCode || generateCode();
         const now = Math.floor(Date.now() / 1000);
-        const expiresAt = now + (parseInt(durationMinutes) * 60);
+        const duration = parseInt(durationMinutes) || 1;
+        const expiresAt = 9999999999; // Will be set on first use
         const limit = parseInt(maxUses) || 1;
 
         try {
           await client.execute({
-            sql: "INSERT INTO access_codes (code, expires_at, max_uses, used_count, created_at) VALUES (?, ?, ?, 0, ?)",
-            args: [code, expiresAt, limit, now]
+            sql: "INSERT INTO access_codes (code, expires_at, max_uses, used_count, created_at, duration_mins) VALUES (?, ?, ?, 0, ?, ?)",
+            args: [code, expiresAt, limit, now, duration]
           });
           return res.status(200).json({ success: true, code, expiresAt, maxUses: limit });
         } catch(e) {

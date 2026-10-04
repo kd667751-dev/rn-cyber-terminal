@@ -40,11 +40,20 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: 'ACCESS DENIED: Code usage limit exceeded.', valid: false });
     }
 
-    // Increment usage
-    await db.execute({
-      sql: "UPDATE access_codes SET used_count = used_count + 1 WHERE code = ?",
-      args: [code]
-    });
+    if (record.used_count === 0 && req.body.action !== 'check') {
+      // FIRST USE! Start the timer now.
+      const newExpiresAt = now + ((record.duration_mins || 60) * 60);
+      await db.execute({
+        sql: "UPDATE access_codes SET used_count = 1, expires_at = ? WHERE code = ?",
+        args: [newExpiresAt, code]
+      });
+    } else if (req.body.action !== 'check') {
+      // Just increment usage
+      await db.execute({
+        sql: "UPDATE access_codes SET used_count = used_count + 1 WHERE code = ?",
+        args: [code]
+      });
+    }
 
     return res.status(200).json({ success: true, valid: true });
   } catch (error) {

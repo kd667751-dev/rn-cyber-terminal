@@ -26,6 +26,9 @@ async function initDb() {
       created_at INTEGER NOT NULL
     )
   `);
+  try {
+    await db.execute("ALTER TABLE access_codes ADD COLUMN duration_mins INTEGER DEFAULT 0");
+  } catch(e) {} // Ignore if column already exists
 }
 
 module.exports = { getDb, initDb };

@@ -191,8 +191,9 @@
       const tr = document.createElement('tr');
       if (invalid) tr.className = 'expired';
       
-      const expDate = new Date(c.expires_at * 1000).toLocaleString();
-      const status = isExpired ? 'Expired' : (isUsedUp ? 'Used Up' : 'Active');
+      const isPending = c.used_count === 0 && c.expires_at > 2000000000;
+      const expDate = isPending ? `Starts on 1st use (${c.duration_mins}m)` : new Date(c.expires_at * 1000).toLocaleString();
+      const status = isExpired ? 'Expired' : (isUsedUp ? 'Used Up' : (isPending ? 'Pending' : 'Active'));
       
       tr.innerHTML = `
         <td><strong>${c.code}</strong></td>
