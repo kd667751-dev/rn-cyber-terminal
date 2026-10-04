@@ -378,7 +378,7 @@ const Snd={on:false,ctx:null,master:null,nbuf:null,drone:null,last:0,
   init(){
     if(this.ctx) return;
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-    this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=0.85; this.master.connect(this.ctx.destination);
+    this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=1.5; this.master.connect(this.ctx.destination);
     const len=(this.ctx.sampleRate*.5)|0; this.nbuf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
     const d=this.nbuf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
   },
@@ -396,7 +396,7 @@ const Snd={on:false,ctx:null,master:null,nbuf:null,drone:null,last:0,
     s.connect(f); f.connect(g); g.connect(this.master); s.start(t,Math.random()*.2); s.stop(t+dur+.02);
   },
   click(){this.burst(.04,2800,4,.25)},
-  tick(){const n=performance.now(); if(n-this.last<45) return; this.last=n; this.burst(.015,4200,6,.08)},
+  tick(){const n=performance.now(); if(n-this.last<45) return; this.last=n; this.burst(.015,4200,6,.3)},
   glitch(v=1){ if(!this.on) return; for(let i=0;i<4;i++) setTimeout(()=>this.burst(rnd(.03,.12),rnd(300,3000),2,.25*v),i*rnd(30,90)); },
   thump(t,f,vol){
     const c=this.ctx,o=c.createOscillator(),g=c.createGain();
@@ -404,12 +404,12 @@ const Snd={on:false,ctx:null,master:null,nbuf:null,drone:null,last:0,
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+.22);
     o.connect(g); g.connect(this.master); o.start(t); o.stop(t+.25);
   },
-  beat(){ if(!this.on) return; const t=this.ctx.currentTime; this.thump(t,70,.7); this.thump(t+.2,56,.45); },
+  beat(){ if(!this.on) return; const t=this.ctx.currentTime; this.thump(t,70,1.2); this.thump(t+.2,56,.45); },
   startDrone(){
     if(this.drone) return;
     const c=this.ctx,o1=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();
     o1.type='sawtooth'; o2.type='sine'; o1.frequency.value=43; o2.frequency.value=64.5;
-    f.type='lowpass'; f.frequency.value=180; g.gain.value=.0001; g.gain.exponentialRampToValueAtTime(.05,c.currentTime+3);
+    f.type='lowpass'; f.frequency.value=180; g.gain.value=.0001; g.gain.exponentialRampToValueAtTime(.25,c.currentTime+3);
     o1.connect(f); o2.connect(f); f.connect(g); g.connect(this.master); o1.start(); o2.start();
     this.drone={o1,o2,g};
   },
@@ -860,6 +860,19 @@ if (savedCode) {
   const err = $('#gateError');
   inp.focus();
   async function verifyCode() {
+    // FORCE SOUND ON during user interaction!
+    if (typeof Snd !== 'undefined' && !Snd.on) {
+      const on = Snd.toggle();
+      const sndBtn = $('#snd');
+      if (sndBtn) {
+        sndBtn.classList.toggle('on', on);
+        sndBtn.setAttribute('aria-pressed', String(on));
+        sndBtn.textContent = on ? 'SOUND · ON' : 'SOUND · OFF';
+        sndBtn.style.opacity = '1';
+        sndBtn.style.pointerEvents = 'auto';
+      }
+    }
+
     const code = inp.value.trim();
     if (!code) return;
     err.textContent = 'VERIFYING...';
@@ -897,6 +910,20 @@ if (savedCode) {
   $('#gateBtn').addEventListener('click', verifyCode);
 }
 
+
+document.addEventListener('pointerdown', () => {
+  if (typeof Snd !== 'undefined' && !Snd.on && current !== 'boot') {
+    const on = Snd.toggle();
+    const sndBtn = $('#snd');
+    if (sndBtn) {
+      sndBtn.classList.toggle('on', on);
+      sndBtn.setAttribute('aria-pressed', String(on));
+      sndBtn.textContent = on ? 'SOUND · ON' : 'SOUND · OFF';
+      sndBtn.style.opacity = '1';
+      sndBtn.style.pointerEvents = 'auto';
+    }
+  }
+}, {once: true});
 })();
 </script>
 </body>
