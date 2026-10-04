@@ -219,9 +219,23 @@ body.rflick #app{animation:rf .18s steps(2)}
   .band,.glitch::before,.glitch::after,.doc::after{animation:none}
   #app.tglitch,body.flick #app,body.rflick #app{animation:none}
 }
+
+#gate{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#gate input{background:transparent;border:1px solid rgba(255,42,69,.5);color:var(--red2);padding:14px 20px;font-family:var(--mono);font-size:1.4rem;outline:none;text-align:center;letter-spacing:4px;width:min(90%,300px);transition:all .3s}
+#gate input:focus{border-color:var(--red2);box-shadow:0 0 15px var(--glow)}
+#gate p{color:var(--dim);font-family:var(--mono);letter-spacing:.3em;margin-bottom:30px;font-size:.9rem}
+#gate .error{color:var(--red2);margin-top:20px;font-family:var(--mono);font-size:.8rem;letter-spacing:.1em;min-height:1.2em;text-shadow:0 0 8px var(--glow)}
+#app{display:none} /* Hidden by default until auth */
 </style>
 </head>
 <body>
+
+<div id="gate">
+  <p>SYSTEM LOCKED</p>
+  <input type="password" id="accessCode" autocomplete="off" spellcheck="false" placeholder="ENTER CODE">
+  <div id="gateError" class="error"></div>
+</div>
+
 <canvas id="pc"></canvas>
 
 <div id="app">
@@ -355,7 +369,7 @@ const Snd={on:false,ctx:null,master:null,nbuf:null,drone:null,last:0,
   init(){
     if(this.ctx) return;
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-    this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=.5; this.master.connect(this.ctx.destination);
+    this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=0.85; this.master.connect(this.ctx.destination);
     const len=(this.ctx.sampleRate*.5)|0; this.nbuf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
     const d=this.nbuf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
   },
@@ -816,13 +830,53 @@ sndBtn.addEventListener('click',()=>{
   sndBtn.textContent=on?'SOUND · ON':'SOUND · OFF';
 });
 
-/* =============== INIT =============== */
-sizeP(); initP(); noise();
-requestAnimationFrame(pFrame);
-setInterval(noise,90);
-setInterval(()=>{ $('#clock').textContent=new Date().toLocaleTimeString('en-GB'); },1000);
-(function rf(){ setTimeout(()=>{ if(current!=='final'&&current!=='boot') microGlitch(); rf(); },rnd(7000,16000)); })();
-enter.boot(0);
+/* =============== AUTH GATE =============== */
+const savedCode = localStorage.getItem('rn01_session');
+
+function startApp() {
+  $('#gate').style.display = 'none';
+  $('#app').style.display = 'block';
+  sizeP(); initP(); noise();
+  requestAnimationFrame(pFrame);
+  setInterval(noise,90);
+  setInterval(()=>{ $('#clock').textContent=new Date().toLocaleTimeString('en-GB'); },1000);
+  (function rf(){ setTimeout(()=>{ if(current!=='final'&&current!=='boot') microGlitch(); rf(); },rnd(7000,16000)); })();
+  enter.boot(0);
+}
+
+if (savedCode) {
+  startApp();
+} else {
+  const inp = $('#accessCode');
+  const err = $('#gateError');
+  inp.focus();
+  inp.addEventListener('keydown', async e => {
+    if (e.key === 'Enter') {
+      const code = inp.value.trim();
+      if (!code) return;
+      err.textContent = 'VERIFYING...';
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (data.valid) {
+          localStorage.setItem('rn01_session', code);
+          startApp();
+        } else {
+          err.textContent = data.error || 'ACCESS DENIED';
+          inp.value = '';
+          Snd.toggle(); Snd.glitch(1); Snd.toggle(); // quick glitch sound if audio allowed
+        }
+      } catch(ex) {
+        err.textContent = 'SYSTEM OFFLINE / DB ERROR';
+      }
+    }
+  });
+}
+
 })();
 </script>
 </body>

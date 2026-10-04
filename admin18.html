@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RN-01 // ADMIN TERMINAL</title>
+  <style>
+    :root { --bg: #0a0a0a; --text: #00ffcc; --border: #00ffcc; --danger: #ff3366; }
+    body { background: var(--bg); color: var(--text); font-family: monospace; margin: 0; padding: 20px; }
+    h1 { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    input, button, select { 
+      background: #000; color: var(--text); border: 1px solid var(--border); 
+      padding: 10px; font-family: monospace; margin: 5px 0;
+    }
+    button { cursor: pointer; transition: 0.2s; }
+    button:hover { background: var(--text); color: #000; }
+    button.danger { border-color: var(--danger); color: var(--danger); }
+    button.danger:hover { background: var(--danger); color: #000; }
+    
+    #login-section, #dashboard-section { display: none; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+    th { color: #fff; }
+    .expired { color: #888; text-decoration: line-through; }
+    
+    .panel { border: 1px solid #333; padding: 20px; margin-top: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; color: #aaa; }
+    .msg { margin-top: 10px; color: #ff0; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>RN-01 [ADMIN ACCESS]</h1>
+  
+  <div id="login-section">
+    <p>Please enter the master admin password.</p>
+    <input type="password" id="adminPass" placeholder="Admin Password">
+    <button onclick="login()">Authenticate</button>
+    <div id="login-msg" class="msg"></div>
+  </div>
+
+  <div id="dashboard-section">
+    <button onclick="logout()" style="float: right;">Logout</button>
+    <p>Authentication Confirmed. Welcome Admin.</p>
+    
+    <div class="panel">
+      <h3>Generate Access Code</h3>
+      <div class="form-group">
+        <label>Custom Code (Leave blank for random 8-char code):</label>
+        <input type="text" id="customCode" placeholder="e.g. VIP-ACCESS">
+      </div>
+      <div class="form-group">
+        <label>Validity Duration (Hours):</label>
+        <input type="number" id="duration" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Max Uses Allowed:</label>
+        <input type="number" id="maxUses" value="1" min="1">
+      </div>
+      <button onclick="generateCode()">Generate Code</button>
+      <div id="gen-msg" class="msg"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Active / Past Codes</h3>
+      <button onclick="loadCodes()">Refresh List</button>
+      <button class="danger" onclick="cleanCodes()" style="float: right;">Clean Expired/Used</button>
+      <table id="codesTable">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Expires</th>
+            <th>Uses</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="codesBody">
+          <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let token = localStorage.getItem('rn01_admin_token');
+
+  if (token) {
+    showDashboard();
+  } else {
+    document.getElementById('login-section').style.display = 'block';
+  }
+
+  async function login() {
+    const pass = document.getElementById('adminPass').value;
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', password: pass })
+    });
+    const data = await res.json();
+    if (data.success) {
+      token = data.token;
+      localStorage.setItem('rn01_admin_token', token);
+      showDashboard();
+    } else {
+      document.getElementById('login-msg').innerText = data.error || 'Login failed';
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('rn01_admin_token');
+    location.reload();
+  }
+
+  function showDashboard() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('dashboard-section').style.display = 'block';
+    loadCodes();
+  }
+
+  async function req(action, body = {}) {
+    const res = await fetch('/api/admin', {
+      method: action === 'GET' ? 'GET' : 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: action === 'GET' ? undefined : JSON.stringify(body)
+    });
+    if (res.status === 401) { logout(); return; }
+    return res.json();
+  }
+
+  async function loadCodes() {
+    const data = await req('GET');
+    if (!data || !data.codes) return;
+    const tbody = document.getElementById('codesBody');
+    tbody.innerHTML = '';
+    const now = Math.floor(Date.now() / 1000);
+    
+    if (data.codes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">No codes found.</td></tr>';
+      return;
+    }
+
+    data.codes.forEach(c => {
+      const isExpired = c.expires_at < now;
+      const isUsedUp = c.used_count >= c.max_uses;
+      const invalid = isExpired || isUsedUp;
+      
+      const tr = document.createElement('tr');
+      if (invalid) tr.className = 'expired';
+      
+      const expDate = new Date(c.expires_at * 1000).toLocaleString();
+      const status = isExpired ? 'Expired' : (isUsedUp ? 'Used Up' : 'Active');
+      
+      tr.innerHTML = `
+        <td><strong>${c.code}</strong></td>
+        <td>${expDate}</td>
+        <td>${c.used_count} / ${c.max_uses}</td>
+        <td>${status}</td>
+        <td><button class="danger" onclick="deleteCode('${c.code}')">Del</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function generateCode() {
+    const customCode = document.getElementById('customCode').value.trim();
+    const durationHours = document.getElementById('duration').value;
+    const maxUses = document.getElementById('maxUses').value;
+    
+    const data = await req('POST', { action: 'create', customCode, durationHours, maxUses });
+    if (data.success) {
+      document.getElementById('gen-msg').innerText = `Success! Code generated: ${data.code}`;
+      document.getElementById('customCode').value = '';
+      loadCodes();
+    } else {
+      document.getElementById('gen-msg').innerText = 'Error: ' + data.error;
+    }
+  }
+
+  async function deleteCode(code) {
+    if (!confirm('Delete code ' + code + '?')) return;
+    await req('POST', { action: 'delete', code });
+    loadCodes();
+  }
+
+  async function cleanCodes() {
+    if (!confirm('Delete all expired and fully used codes?')) return;
+    await req('POST', { action: 'clean' });
+    loadCodes();
+  }
+</script>
+
+</body>
+</html>
