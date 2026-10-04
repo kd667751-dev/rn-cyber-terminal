@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RN-01 // ADMIN TERMINAL</title>
   <style>
+    body { touch-action: manipulation; }
 
     * { -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
     input, textarea { -webkit-user-select: auto; user-select: auto; }
@@ -103,19 +104,40 @@
   }
 
   async function login() {
-    const pass = document.getElementById('adminPass').value;
-    const res = await fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', password: pass })
-    });
-    const data = await res.json();
-    if (data.success) {
-      token = data.token;
-      localStorage.setItem('rn01_admin_token', token);
-      showDashboard();
-    } else {
-      document.getElementById('login-msg').innerText = data.error || 'Login failed';
+    const msgBox = document.getElementById('login-msg');
+    msgBox.innerText = 'Sending request to server...';
+    try {
+      const pass = document.getElementById('adminPass').value;
+      console.log("Sending login request with pass length:", pass.length);
+      
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', password: pass })
+      });
+      console.log("Response status:", res.status);
+      
+      const text = await res.text();
+      console.log("Response text:", text);
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        msgBox.innerText = `DEBUG ERROR: Server returned non-JSON. Status: ${res.status}\nText: ${text.substring(0, 50)}...`;
+        return;
+      }
+      
+      if (data.success) {
+        token = data.token;
+        localStorage.setItem('rn01_admin_token', token);
+        showDashboard();
+      } else {
+        msgBox.innerText = data.error || 'Login failed';
+      }
+    } catch (err) {
+      console.error(err);
+      msgBox.innerText = 'DEBUG FATAL: ' + String(err);
     }
   }
 

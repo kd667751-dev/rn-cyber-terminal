@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>RN-01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
+body { touch-action: manipulation; }
 :root{
   --bg:#020202;--red:#b3001b;--red2:#ff2a45;--glow:rgba(255,30,60,.55);
   --txt:#cfcfcf;--dim:#7d7d7d;
@@ -866,7 +867,14 @@ if (savedCode) {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ code })
         });
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch(e) {
+          err.textContent = `DEBUG ERROR: ${res.status} | ` + text.substring(0,30);
+          return;
+        }
         if (data.valid) {
           localStorage.setItem('rn01_session', code);
           startApp();
