@@ -1,148 +1,829 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RN-01 // CLASSIFIED TERMINAL</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>RN-01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020202;--red:#b3001b;--red2:#ff2a45;--glow:rgba(255,30,60,.55);
+  --txt:#cfcfcf;--dim:#7d7d7d;
+  --mono:'Share Tech Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;
+  --serif:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
+  --px:0;--py:0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+
+#pc{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#app{position:fixed;inset:0;z-index:2}
+
+/* ---------- CRT overlays ---------- */
+.scan{position:fixed;inset:0;z-index:6;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.30) 3px,rgba(0,0,0,0) 4px)}
+.vig{position:fixed;inset:0;z-index:6;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 50%,rgba(0,0,0,.78) 100%)}
+.band{position:fixed;left:0;right:0;top:-22vh;height:20vh;z-index:6;pointer-events:none;background:linear-gradient(to bottom,transparent,rgba(255,30,60,.05),transparent);animation:band 8s linear infinite}
+#noise{position:fixed;inset:0;width:100%;height:100%;z-index:6;pointer-events:none;opacity:.06;image-rendering:pixelated}
+body.isfinal .scan,body.isfinal #noise{opacity:.4}
+@keyframes band{to{transform:translateY(145vh)}}
+
+/* ---------- scenes ---------- */
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  padding:max(20px,env(safe-area-inset-top)) 18px max(70px,env(safe-area-inset-bottom));
+  overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;pointer-events:none;filter:blur(8px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),filter .7s,visibility 0s .7s}
+.scene.active{opacity:1;visibility:visible;pointer-events:auto;filter:none;
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),filter .7s,visibility 0s}
+.scene.center{justify-content:center}
+.wrap{width:min(100%,560px);margin-block:auto}
+
+#app.tglitch{animation:tg .36s steps(1)}
+@keyframes tg{
+  0%{transform:translate(0)}
+  15%{transform:translate(-6px,2px) skewX(3deg);filter:hue-rotate(-18deg) contrast(1.5)}
+  30%{transform:translate(5px,-3px);clip-path:inset(30% 0 40% 0)}
+  45%{transform:translate(-3px,0);clip-path:none}
+  60%{transform:translate(4px,1px) skewX(-2deg);filter:brightness(1.7)}
+  80%{transform:translate(0);filter:none}
+  100%{transform:none;filter:none}}
+body.flick #app{animation:flk .12s steps(1) infinite}
+@keyframes flk{0%{opacity:1}50%{opacity:.22;transform:translateX(-5px)}}
+body.rflick #app{animation:rf .18s steps(2)}
+@keyframes rf{0%{opacity:1}30%{opacity:.4;transform:translateX(2px)}60%{opacity:.85;transform:translateX(-2px)}100%{opacity:1}}
+#app.calm{animation:calm 2.4s ease-out}
+@keyframes calm{0%{filter:brightness(2.2) saturate(1.6)}100%{filter:none}}
+
+/* ---------- typography ---------- */
+.name{position:relative;font-family:var(--serif);font-weight:300;letter-spacing:.2em;padding-left:.2em;text-transform:uppercase;
+  text-align:center;line-height:1.15;color:#f3ecec;text-shadow:0 0 18px var(--glow),0 0 44px rgba(255,20,50,.22);
+  font-size:clamp(2rem,9.5vw,4.4rem)}
+.name.sm{font-size:clamp(1.5rem,7vw,2.6rem)}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;inset:0;padding-left:.2em;text-align:center;pointer-events:none}
+.glitch::before{color:var(--red2);transform:translate(3px,0);clip-path:inset(0 0 100% 0);animation:gl1 5s infinite steps(1)}
+.glitch::after{color:#fff;opacity:.55;transform:translate(-3px,0);clip-path:inset(100% 0 0 0);animation:gl2 6.3s infinite steps(1)}
+@keyframes gl1{0%,88%,100%{clip-path:inset(0 0 100% 0)}89%{clip-path:inset(20% 0 55% 0)}91%{clip-path:inset(62% 0 8% 0)}93%{clip-path:inset(4% 0 82% 0)}95%{clip-path:inset(0 0 100% 0)}}
+@keyframes gl2{0%,80%,100%{clip-path:inset(100% 0 0 0)}81%{clip-path:inset(44% 0 30% 0)}83%{clip-path:inset(10% 0 70% 0)}85%{clip-path:inset(75% 0 5% 0)}87%{clip-path:inset(100% 0 0 0)}}
+.par{transform:translate3d(calc(var(--px)*10px),calc(var(--py)*6px),0)}
+
+.ln{white-space:pre-wrap;word-break:break-word}
+.ln.typing::after{content:'█';color:var(--red2);margin-left:3px;animation:blink 1s steps(1) infinite}
+.v.typing::after{content:'█';color:var(--red2);margin-left:3px;animation:blink 1s steps(1) infinite}
+.frozen .ln.typing::after{animation:none}
+@keyframes blink{50%{opacity:0}}
+.dim{color:var(--dim)}
+.ok{color:var(--red2)}
+.hit{color:var(--red2);text-shadow:0 0 12px var(--glow)}
+.cmd{color:#9a9a9a}
+
+/* ---------- boot ---------- */
+.term{width:min(100%,560px);font-size:clamp(.78rem,3.5vw,.95rem);line-height:1.8;color:#bdbdbd;letter-spacing:.04em;transition:opacity .7s}
+.term.out,.bootid.out{opacity:0}
+.bar{height:6px;width:min(100%,320px);border:1px solid rgba(255,42,69,.5);margin:.3rem 0 .6rem}
+.bar i{display:block;height:100%;width:0;background:var(--red2);box-shadow:0 0 8px var(--glow)}
+.bootid{display:flex;flex-direction:column;align-items:center;gap:10px;transition:opacity .7s}
+.bid1{font-size:clamp(.8rem,3.6vw,1rem);letter-spacing:.35em;color:var(--dim);min-height:1.4em}
+.bid1.typing::after{content:'█';color:var(--red2);margin-left:3px;animation:blink 1s steps(1) infinite}
+.bid2{position:relative;font-size:clamp(3rem,16vw,6rem);letter-spacing:.14em;padding-left:.14em;color:var(--red2);opacity:0;text-shadow:0 0 26px var(--glow),0 0 60px rgba(255,20,50,.3)}
+.bid2.on{opacity:1}
+#bootname{opacity:0;letter-spacing:.7em;filter:blur(12px);transition:opacity 2.4s ease,letter-spacing 3s cubic-bezier(.2,.7,.2,1),filter 2.4s}
+#bootname.reveal{opacity:1;letter-spacing:.2em;filter:none}
+#bootname.distort{animation:dist .9s steps(1)}
+@keyframes dist{
+  0%{transform:translate(0)}
+  12%{transform:translate(-8px,0) skewX(8deg);text-shadow:6px 0 var(--red2),-6px 0 rgba(255,255,255,.4)}
+  28%{transform:translate(6px,2px);clip-path:inset(0 0 55% 0)}
+  42%{transform:translate(-4px,-2px);clip-path:inset(45% 0 0 0)}
+  60%{transform:translate(9px,0) skewX(-10deg);clip-path:none;text-shadow:-6px 0 var(--red2),6px 0 rgba(255,255,255,.4)}
+  80%{transform:translate(-2px,0)}
+  100%{transform:none}}
+
+.ghost{background:none;border:0;color:#6a6a6a;font-size:.72rem;letter-spacing:.22em;padding:14px 18px;min-height:44px;cursor:pointer}
+.ghost:hover{color:var(--red2)}
+#skip,#fexit{position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4}
+#fexit{opacity:0;pointer-events:none;transition:opacity 2s}
+#fexit.on{opacity:1;pointer-events:auto}
+
+/* ---------- hub ---------- */
+.hubwrap{width:min(100%,520px);margin-block:auto}
+.tag{font-size:.68rem;letter-spacing:.25em;color:var(--dim);text-align:center;margin-bottom:22px}
+.sub{margin-top:14px;font-size:.78rem;letter-spacing:.3em;color:var(--red2);text-align:center;user-select:none;cursor:default;padding:6px}
+.menu{display:grid;gap:12px;width:100%;margin-top:clamp(20px,5vh,40px)}
+.mod{font-size:.95rem;color:var(--txt);letter-spacing:.18em;text-align:left;cursor:pointer;min-height:62px;padding:16px 18px;display:flex;align-items:center;gap:14px;
+  border:1px solid rgba(255,42,69,.28);
+  background:linear-gradient(100deg,rgba(255,42,69,0) 40%,rgba(255,42,69,.16) 50%,rgba(255,42,69,0) 60%),rgba(20,0,4,.4);
+  background-size:260% 100%,100% 100%;background-position:120% 0,0 0;position:relative;
+  transition:border-color .25s,box-shadow .25s,background-position .8s,transform .2s}
+.scene.active .mod{animation:modIn .8s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--i)*.12s + .15s)}
+@keyframes modIn{from{opacity:0;transform:translateY(12px)}}
+.mod:hover{border-color:var(--red2);box-shadow:0 0 22px rgba(255,30,60,.22);background-position:-20% 0,0 0}
+.mod:active{transform:scale(.985)}
+.mod .idx{color:var(--red2);font-size:.75rem;opacity:.75}
+.mod .st{margin-left:auto;font-size:.66rem;color:var(--dim);letter-spacing:.2em}
+.mod.locked .lbl{color:#6b6b6b}
+.mod.final.ready{border-color:var(--red2)}
+.mod.final.ready .st{color:var(--red2)}
+.mod.final.ready::after{content:'';position:absolute;inset:-1px;pointer-events:none;animation:ring 2.2s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,42,69,.55)}100%{box-shadow:0 0 0 12px rgba(255,42,69,0)}}
+.hubmsg{margin-top:22px;text-align:center;font-size:.72rem;letter-spacing:.2em;color:var(--dim);min-height:2.6em;line-height:1.7}
+.hubmsg.alert{color:var(--red2)}
+
+/* ---------- shared window ---------- */
+.back{align-self:flex-start;background:none;border:0;color:var(--dim);font-size:.78rem;letter-spacing:.22em;min-height:44px;padding:0 4px;cursor:pointer;margin-bottom:8px}
+.back:hover{color:var(--red2)}
+.win{border:1px solid rgba(255,255,255,.1);background:rgba(4,4,4,.78)}
+.winbar{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;font-size:.64rem;letter-spacing:.18em;color:var(--dim);border-bottom:1px solid rgba(255,255,255,.08)}
+.tracebar{height:2px;background:rgba(255,255,255,.06)}
+.tracebar i{display:block;height:100%;width:0;background:var(--red2);transition:width .6s;box-shadow:0 0 8px var(--glow)}
+.logbox{padding:14px;min-height:240px;max-height:56vh;overflow-y:auto;font-size:.85rem;line-height:1.9;letter-spacing:.05em;transition:filter .4s}
+.logbox.tall{min-height:300px}
+.logbox.frozen{filter:saturate(.2) brightness(.65)}
+.ts{color:var(--red2)}
+.lognote{padding:0 14px 16px;min-height:5.5em}
+.lab{font-size:.7rem;letter-spacing:.22em;color:var(--red2)}
+.note{font-family:var(--serif);font-style:italic;font-size:clamp(1.25rem,5.4vw,1.75rem);line-height:1.4;color:#eadede;margin-top:6px;text-shadow:0 0 14px rgba(255,30,60,.25)}
+.retbtn{margin-top:14px}
+.w{display:inline-block;opacity:0;filter:blur(6px);animation:wIn 1.4s forwards cubic-bezier(.2,.7,.2,1)}
+@keyframes wIn{to{opacity:1;filter:none}}
+
+/* ---------- dossier ---------- */
+.doc{border:1px solid rgba(255,42,69,.35);background:linear-gradient(180deg,rgba(25,0,6,.6),rgba(5,0,2,.78));padding-bottom:16px;box-shadow:0 0 40px rgba(179,0,27,.14),inset 0 0 40px rgba(0,0,0,.6);position:relative;overflow:hidden}
+.doc::after{content:'';position:absolute;left:0;right:0;height:60px;top:-60px;background:linear-gradient(to bottom,transparent,rgba(255,42,69,.09),transparent);animation:docscan 5s linear infinite;pointer-events:none}
+@keyframes docscan{to{transform:translateY(520px)}}
+.dochead{display:flex;justify-content:space-between;gap:8px;padding:10px 14px;font-size:.62rem;letter-spacing:.18em;color:var(--red2);border-bottom:1px solid rgba(255,42,69,.25);background:rgba(179,0,27,.1)}
+.rows{padding:14px 16px 4px}
+.row{display:grid;grid-template-columns:11.5em 1fr;gap:8px;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.07);font-size:.86rem;letter-spacing:.1em;align-items:baseline;min-height:2.5em}
+.k{color:var(--dim)}
+.v{color:#e6e6e6;min-height:1.2em}
+.v.warn{color:var(--red2);animation:blinkv 1.6s steps(1) infinite}
+.v.jit{color:var(--red2);display:inline-block;animation:jit .9s steps(2) infinite}
+.v.redact{color:#555;cursor:pointer;user-select:none}
+@keyframes blinkv{60%{opacity:.35}}
+@keyframes jit{0%{transform:translate(0)}25%{transform:translate(1px,0)}50%{transform:translate(-2px,1px)}75%{transform:translate(2px,0)}}
+.quote{font-family:var(--serif);font-style:italic;font-size:clamp(1.25rem,5.2vw,1.7rem);line-height:1.5;color:#e8dede;padding:18px 18px 0;min-height:6em;text-shadow:0 0 14px rgba(255,30,60,.25)}
+.fine{padding:12px 18px 0;font-size:.6rem;letter-spacing:.14em;line-height:1.7;color:#666}
+@media (max-width:420px){.row{grid-template-columns:1fr;gap:2px}.dochead{font-size:.58rem}}
+
+/* ---------- unknown shell ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 12px}
+.chip{background:transparent;border:1px solid rgba(255,255,255,.18);color:#bdbdbd;font-size:.8rem;letter-spacing:.08em;padding:0 14px;min-height:44px;cursor:pointer}
+.chip:hover,.chip:active{border-color:var(--red2);color:#fff}
+#uform{display:flex;align-items:center;gap:8px;padding:0 12px 14px}
+.ps{color:var(--red2);font-size:.78rem;white-space:nowrap}
+#uin{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.2);color:#eee;font-family:var(--mono);font-size:16px;padding:8px 2px;outline:0;caret-color:var(--red2)}
+#uin:focus{border-bottom-color:var(--red2)}
+
+/* ---------- anomaly ---------- */
+#anomaly{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center;background:rgba(8,0,2,.92);opacity:0;visibility:hidden;transition:opacity .15s}
+#anomaly.on{opacity:1;visibility:visible}
+#anomaly::before{content:'';position:absolute;inset:14px;border:1px solid rgba(255,42,69,.5)}
+.a1{color:var(--red2);font-size:clamp(1.05rem,5vw,1.7rem);letter-spacing:.2em;text-shadow:0 0 16px var(--glow);animation:alarm .6s steps(2) infinite}
+@keyframes alarm{50%{opacity:.35}}
+.a2{font-family:var(--serif);font-style:italic;font-size:clamp(1.2rem,5.4vw,1.8rem);color:#eee;min-height:2.2em;max-width:20em}
+.a2.typing::after{content:'█';color:var(--red2);margin-left:3px;animation:blink 1s steps(1) infinite}
+
+/* ---------- warn ---------- */
+.warnwrap{text-align:center}
+.wtri{font-size:2rem;color:var(--red2);text-shadow:0 0 18px var(--glow);animation:alarm 1.4s steps(2) infinite}
+.warnh{color:var(--red2);letter-spacing:.35em;font-size:1rem;margin-top:10px;min-height:1.5em}
+.warnp{font-size:clamp(.95rem,4vw,1.15rem);line-height:1.85;max-width:28em;margin:18px auto 30px;letter-spacing:.06em;color:#d8d8d8;min-height:8.5em}
+.warnp.typing::after,.warnh.typing::after{content:'█';color:var(--red2);margin-left:3px;animation:blink 1s steps(1) infinite}
+.btnrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;opacity:0;pointer-events:none;transition:opacity 1s}
+.btnrow.on{opacity:1;pointer-events:auto}
+.btn{min-height:54px;padding:0 24px;letter-spacing:.22em;font-size:.9rem;background:transparent;color:var(--txt);border:1px solid rgba(255,255,255,.25);cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.btn.red{border-color:var(--red2);color:#fff;background:rgba(179,0,27,.25)}
+.btn:hover{border-color:var(--red2);box-shadow:0 0 20px rgba(255,30,60,.25)}
+
+/* ---------- final ---------- */
+#final{align-items:center}
+#ecg{width:min(100%,720px);height:120px;opacity:0;transition:opacity 2.5s;cursor:pointer;touch-action:manipulation}
+#ecg.on{opacity:1}
+.fname{font-family:var(--serif);font-weight:300;font-size:clamp(1.8rem,8vw,3.6rem);letter-spacing:.45em;padding-left:.45em;white-space:nowrap;opacity:0;filter:blur(8px);text-transform:uppercase;text-align:center;margin-top:34px;color:#f4eeee;text-shadow:0 0 22px rgba(255,30,60,.35);
+  transition:opacity 3s ease,letter-spacing 4.5s cubic-bezier(.2,.7,.2,1),filter 3s,padding 4.5s}
+.fname.on{opacity:1;letter-spacing:.28em;padding-left:.28em;filter:none}
+.fquote{font-family:var(--serif);font-style:italic;font-size:clamp(1.15rem,4.8vw,1.55rem);line-height:1.65;text-align:center;max-width:26em;margin-top:36px;color:#cdbfbf;min-height:6.5em}
+.fsig{margin-top:18px;font-size:.74rem;letter-spacing:.3em;color:var(--red2);opacity:0;transition:opacity 2.5s;cursor:pointer;padding:10px}
+.fsig.on{opacity:.9}
+.fnote{font-family:var(--serif);font-style:italic;font-size:.95rem;color:#6d6d6d;min-height:1.4em;transition:opacity 1s}
+
+/* ---------- sound toggle ---------- */
+#snd{position:fixed;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:30;min-height:44px;min-width:44px;padding:0 12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.65);color:var(--dim);font-size:.66rem;letter-spacing:.18em;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .8s,color .2s,border-color .2s}
+#snd.show{opacity:1;pointer-events:auto}
+#snd.on{color:var(--red2);border-color:rgba(255,42,69,.6)}
+
+@media (prefers-reduced-motion:reduce){
+  .band,.glitch::before,.glitch::after,.doc::after{animation:none}
+  #app.tglitch,body.flick #app,body.rflick #app{animation:none}
+}
+</style>
 </head>
 <body>
-  
-  <!-- CRT Overlay Effects -->
-  <div class="crt-overlay"></div>
-  <div class="scanlines"></div>
-  <div class="vignette"></div>
+<canvas id="pc"></canvas>
 
-  <!-- Audio Toggle -->
-  <button id="audioToggle" class="audio-toggle hidden">[ SOUND: OFF ]</button>
+<div id="app">
 
-  <main id="app">
-    
-    <!-- BOOT SEQUENCE -->
-    <section id="bootSequence" class="screen active">
-      <div class="terminal-container">
-        <div id="bootText" class="terminal-text"></div>
-        <div id="bootFinal" class="hidden">
-          <div class="subject-id glitch-text" data-text="RN-01">RN-01</div>
-          <h1 class="reveal-name" id="rajNandaniTitle">RAJ NANDANI</h1>
-          <button id="enterSystemBtn" class="cyber-btn mt-8 opacity-0 transition-opacity">
-            <span>[ ENTER SYSTEM ]</span>
-          </button>
+  <!-- BOOT -->
+  <section id="boot" class="scene center active">
+    <div id="bootlog" class="term"></div>
+    <div id="bootid" class="bootid" hidden>
+      <div id="bid1" class="bid1"></div>
+      <div id="bid2" class="bid2 glitch" data-text="RN-01">RN-01</div>
+    </div>
+    <h1 id="bootname" class="name glitch" data-text="RAJ NANDANI" hidden>RAJ NANDANI</h1>
+    <button id="skip" class="ghost" type="button">[ skip ]</button>
+  </section>
+
+  <!-- HUB -->
+  <section id="hub" class="scene">
+    <div class="hubwrap">
+      <div class="tag">SESSION · ACTIVE · <span id="clock">--:--:--</span></div>
+      <h2 class="name sm glitch par" data-text="RAJ NANDANI">RAJ NANDANI</h2>
+      <div class="sub" id="rnTap">RN-01 // SECURE CHANNEL</div>
+      <nav class="menu">
+        <button class="mod" type="button" data-act="file" style="--i:0"><span class="idx">01</span><span class="lbl">[ ACCESS FILE ]</span></button>
+        <button class="mod" type="button" data-act="logs" style="--i:1"><span class="idx">02</span><span class="lbl">[ SYSTEM LOGS ]</span></button>
+        <button class="mod" type="button" data-act="unknown" style="--i:2"><span class="idx">03</span><span class="lbl">[ UNKNOWN ]</span></button>
+        <button class="mod final locked" id="btnFinal" type="button" data-act="final" style="--i:3"><span class="idx">04</span><span class="lbl">[ FINAL ACCESS ]</span><span class="st" id="finalst">LOCKED</span></button>
+      </nav>
+      <div id="hubmsg" class="hubmsg">SELECT MODULE</div>
+    </div>
+  </section>
+
+  <!-- FILE -->
+  <section id="file" class="scene">
+    <div class="wrap">
+      <button class="back" type="button" data-go="hub">‹ BACK</button>
+      <article id="dossier" class="doc">
+        <div class="dochead"><span>CLASSIFIED // EYES ONLY</span><span>DOC-RN-01</span></div>
+        <div class="rows">
+          <div class="row"><span class="k">SUBJECT:</span><span class="v" data-v="RAJ NANDANI"></span></div>
+          <div class="row"><span class="k">CODE:</span><span class="v" data-v="RN-01"></span></div>
+          <div class="row"><span class="k">STATUS:</span><span class="v" data-v="ACTIVE"></span></div>
+          <div class="row"><span class="k">THREAT LEVEL:</span><span class="v warn" data-v="UNKNOWN"></span></div>
+          <div class="row"><span class="k">SYSTEM RESPONSE:</span><span class="v jit" data-v="UNSTABLE"></span></div>
+          <div class="row"><span class="k">SOURCE:</span><span class="v redact" data-v="████████"></span></div>
         </div>
+        <p id="fileq" class="quote"></p>
+        <div class="fine">// ALL FIELDS ARE FICTIONAL. CINEMATIC ELEMENTS ONLY. NO REAL RECORDS.</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- LOGS -->
+  <section id="logs" class="scene">
+    <div class="wrap">
+      <button class="back" type="button" data-go="hub">‹ BACK</button>
+      <div class="win">
+        <div class="winbar"><span>SYSTEM LOGS</span><span id="tracepct">TRACE 0%</span></div>
+        <div class="tracebar"><i id="tracefill"></i></div>
+        <div id="logbox" class="logbox"></div>
+        <div id="lognote" class="lognote"></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- MAIN HUB -->
-    <section id="mainHub" class="screen hidden">
-      <div class="hub-container">
-        <div class="hub-header">
-          <span class="sys-badge">SYSTEM STATUS: <span class="status-warning">UNSTABLE</span></span>
-          <span class="sys-badge right">ID: RN-01</span>
+  <!-- UNKNOWN -->
+  <section id="unknown" class="scene">
+    <div class="wrap">
+      <button class="back" type="button" data-go="hub">‹ BACK</button>
+      <div class="win">
+        <div class="winbar"><span>UNKNOWN // RESTRICTED SHELL</span><span>PID ????</span></div>
+        <div id="ubox" class="logbox tall"></div>
+        <div class="chips">
+          <button class="chip" type="button" data-cmd="help">help</button>
+          <button class="chip" type="button" data-cmd="whoami">whoami</button>
+          <button class="chip" type="button" data-cmd="status">status</button>
+          <button class="chip" type="button" data-cmd="why">why</button>
+          <button class="chip" type="button" data-cmd="heartbeat">heartbeat</button>
         </div>
-        
-        <div class="nav-grid">
-          <button class="nav-btn" data-target="classifiedFile">
-            <span class="btn-bracket">[</span> ACCESS FILE <span class="btn-bracket">]</span>
-          </button>
-          <button class="nav-btn" data-target="systemLogs">
-            <span class="btn-bracket">[</span> SYSTEM LOGS <span class="btn-bracket">]</span>
-          </button>
-          <button class="nav-btn glitch-hover" id="unknownBtn" data-target="unknownSection">
-            <span class="btn-bracket">[</span> UNKNOWN <span class="btn-bracket">]</span>
-          </button>
-          <button class="nav-btn final-btn locked" id="finalAccessBtn" data-target="finalAccess">
-            <span class="btn-bracket">[</span> FINAL ACCESS <span class="btn-bracket">]</span>
-          </button>
-        </div>
-        
-        <div class="system-alerts" id="systemAlerts">
-          <!-- Dynamically populated alerts -->
-        </div>
+        <form id="uform" autocomplete="off">
+          <span class="ps">visitor@rn01:~$</span>
+          <input id="uin" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="command">
+        </form>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- CLASSIFIED FILE -->
-    <section id="classifiedFile" class="screen hidden">
-      <div class="content-container dossier-border">
-        <button class="back-btn">[ RETURN ]</button>
-        <div class="dossier-header">
-          <h2>CLASSIFIED DOSSIER</h2>
-          <div class="barcode">|||| ||||| || |||||| | |||</div>
-        </div>
-        
-        <div class="dossier-body">
-          <div class="data-row"><span class="data-label">SUBJECT:</span> <span class="data-value highlight">RAJ NANDANI</span></div>
-          <div class="data-row"><span class="data-label">CODE:</span> <span class="data-value">RN-01</span></div>
-          <div class="data-row"><span class="data-label">STATUS:</span> <span class="data-value warning">ACTIVE</span></div>
-          <div class="data-row"><span class="data-label">THREAT LEVEL:</span> <span class="data-value glitch-text-small" data-text="UNKNOWN">UNKNOWN</span></div>
-          <div class="data-row"><span class="data-label">SYSTEM RESPONSE:</span> <span class="data-value danger">UNSTABLE / COMPROMISED</span></div>
-          
-          <div class="divider"></div>
-          
-          <div class="dossier-quote">
-            "Some people enter your life quietly. Somehow, they become impossible to ignore."
-          </div>
-          
-          <div class="fingerprint-scan">
-            <div class="scan-line"></div>
-          </div>
-        </div>
+  <!-- WARNING -->
+  <section id="warn" class="scene center">
+    <div class="wrap warnwrap">
+      <div class="wtri">⚠</div>
+      <div id="warn1" class="warnh"></div>
+      <p id="warn2" class="warnp"></p>
+      <div id="warnbtns" class="btnrow">
+        <button class="btn red" id="proceed" type="button">[ PROCEED ]</button>
+        <button class="btn" id="abort" type="button">[ ABORT ]</button>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- SYSTEM LOGS -->
-    <section id="systemLogs" class="screen hidden">
-      <div class="content-container">
-        <button class="back-btn">[ RETURN ]</button>
-        <div class="logs-header">
-          <h2>ENCRYPTED LOGS</h2>
-          <span class="blinking-cursor">_</span>
-        </div>
-        
-        <div class="logs-terminal" id="logsTerminal">
-          <!-- Logs appear here dynamically -->
-        </div>
-      </div>
-    </section>
+  <!-- FINAL -->
+  <section id="final" class="scene center">
+    <canvas id="ecg"></canvas>
+    <h2 id="fname" class="fname">RAJ NANDANI</h2>
+    <p id="fquote" class="fquote"></p>
+    <div id="fsig" class="fsig">— RN-01</div>
+    <div id="fnote" class="fnote"></div>
+    <button id="fexit" class="ghost" type="button">‹ exit</button>
+  </section>
+</div>
 
-    <!-- UNKNOWN (GLITCH EVENT) -->
-    <section id="unknownSection" class="screen hidden">
-      <div class="glitch-overlay" id="severeGlitch">
-        <h1 class="huge-glitch">⚠ SYSTEM ANOMALY DETECTED</h1>
-        <p class="corrupted-text">0xERR_EMOTIONAL_OVERRIDE</p>
-        <p class="glitch-message">This system was never designed for this.</p>
-        <div class="hex-dump" id="hexDump"></div>
-      </div>
-    </section>
+<div id="anomaly"><div class="a1">⚠ SYSTEM ANOMALY DETECTED</div><div id="a2" class="a2"></div></div>
 
-    <!-- FINAL ACCESS WARNING -->
-    <section id="finalWarning" class="screen hidden">
-      <div class="warning-container">
-        <h2 class="danger-text">⚠ WARNING</h2>
-        <p>You are about to access the only file this system was never supposed to contain.</p>
-        <div class="btn-row">
-          <button class="cyber-btn abort-btn" id="abortFinalBtn">[ ABORT ]</button>
-          <button class="cyber-btn proceed-btn" id="proceedFinalBtn">[ PROCEED ]</button>
-        </div>
-      </div>
-    </section>
+<div class="scan"></div><div class="band"></div><div class="vig"></div>
+<canvas id="noise" width="96" height="96"></canvas>
+<button id="snd" type="button" aria-pressed="false">SOUND · OFF</button>
 
-    <!-- FINAL ACCESS SCENE -->
-    <section id="finalAccess" class="screen hidden final-scene">
-      <div class="particles" id="particles"></div>
-      <div class="heartbeat-line"></div>
-      <div class="final-content">
-        <h1 class="elegant-name">RAJ NANDANI</h1>
-        <p class="final-quote">"I don't really know when you became special. I just know that somewhere along the way, you did."</p>
-        <span class="final-signoff">— RN-01</span>
-      </div>
-    </section>
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isMobile=matchMedia('(max-width:700px)').matches||/Android|iPhone|iPad/i.test(navigator.userAgent);
 
-  </main>
+let token=0, current='boot';
+const state={logsDone:false,glitched:false,hubNote:''};
 
-  <script src="script.js"></script>
+/* =============== SOUND (optional, off by default) =============== */
+const Snd={on:false,ctx:null,master:null,nbuf:null,drone:null,last:0,
+  init(){
+    if(this.ctx) return;
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=.5; this.master.connect(this.ctx.destination);
+    const len=(this.ctx.sampleRate*.5)|0; this.nbuf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
+    const d=this.nbuf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+  },
+  toggle(){
+    this.init(); if(!this.ctx) return false;
+    this.on=!this.on;
+    if(this.on){ this.ctx.resume(); this.startDrone(); this.click(); } else this.stopDrone();
+    return this.on;
+  },
+  burst(dur,freq,q,vol,type){
+    if(!this.on) return;
+    const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+    s.buffer=this.nbuf; f.type=type||'bandpass'; f.frequency.value=freq; f.Q.value=q;
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t,Math.random()*.2); s.stop(t+dur+.02);
+  },
+  click(){this.burst(.04,2800,4,.25)},
+  tick(){const n=performance.now(); if(n-this.last<45) return; this.last=n; this.burst(.015,4200,6,.08)},
+  glitch(v=1){ if(!this.on) return; for(let i=0;i<4;i++) setTimeout(()=>this.burst(rnd(.03,.12),rnd(300,3000),2,.25*v),i*rnd(30,90)); },
+  thump(t,f,vol){
+    const c=this.ctx,o=c.createOscillator(),g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(38,t+.18);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+.22);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t+.25);
+  },
+  beat(){ if(!this.on) return; const t=this.ctx.currentTime; this.thump(t,70,.7); this.thump(t+.2,56,.45); },
+  startDrone(){
+    if(this.drone) return;
+    const c=this.ctx,o1=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();
+    o1.type='sawtooth'; o2.type='sine'; o1.frequency.value=43; o2.frequency.value=64.5;
+    f.type='lowpass'; f.frequency.value=180; g.gain.value=.0001; g.gain.exponentialRampToValueAtTime(.05,c.currentTime+3);
+    o1.connect(f); o2.connect(f); f.connect(g); g.connect(this.master); o1.start(); o2.start();
+    this.drone={o1,o2,g};
+  },
+  stopDrone(){
+    if(!this.drone) return;
+    const {o1,o2,g}=this.drone,t=this.ctx.currentTime;
+    g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(g.gain.value,.0002),t); g.gain.exponentialRampToValueAtTime(.0001,t+.4);
+    o1.stop(t+.5); o2.stop(t+.5); this.drone=null;
+  }
+};
+
+/* =============== TEXT HELPERS =============== */
+async function typeInto(el,text,speed=26,tk=token){
+  for(let i=0;i<text.length;i++){
+    if(tk!==token) return false;
+    el.textContent+=text[i];
+    if(i%3===0) Snd.tick();
+    await sleep(speed*(.6+Math.random()*.8));
+  }
+  return true;
+}
+async function line(box,text,o={}){
+  const {cls='',speed=22,tk=token}=o;
+  const d=document.createElement('div'); d.className='ln '+cls; box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+  d.classList.add('typing');
+  const ok=await typeInto(d,text,speed,tk);
+  d.classList.remove('typing');
+  box.scrollTop=box.scrollHeight;
+  return ok?d:null;
+}
+async function logLine(box,ts,msg,speed,tk){
+  const d=document.createElement('div'); d.className='ln';
+  const a=document.createElement('span'); a.className='ts';
+  const b=document.createElement('span');
+  d.append(a,b); box.appendChild(d); d.classList.add('typing'); box.scrollTop=box.scrollHeight;
+  if(!await typeInto(a,ts,speed*.5,tk)) return null;
+  if(!await typeInto(b,' — '+msg,speed,tk)) return null;
+  d.classList.remove('typing'); box.scrollTop=box.scrollHeight; return d;
+}
+function words(el,lines,step=.16){
+  el.innerHTML=''; let n=0;
+  lines.forEach(t=>{
+    const d=document.createElement('div');
+    t.split(' ').forEach(w=>{
+      const s=document.createElement('span'); s.className='w'; s.textContent=w; s.style.animationDelay=(n++*step)+'s';
+      d.appendChild(s); d.appendChild(document.createTextNode(' '));
+    });
+    el.appendChild(d);
+  });
+  return n*step+1.4;
+}
+async function bar(box,ms,tk){
+  const w=document.createElement('div'); w.className='bar'; const i=document.createElement('i'); w.appendChild(i); box.appendChild(w);
+  const t0=performance.now();
+  for(;;){
+    if(tk!==token) return false;
+    const p=Math.min(1,(performance.now()-t0)/ms);
+    i.style.width=(p*100)+'%';
+    if(p>=1) break;
+    await sleep(40);
+  }
+  return true;
+}
+function microGlitch(){
+  if(reduce) return;
+  const b=document.body; b.classList.add('rflick'); setTimeout(()=>b.classList.remove('rflick'),180);
+}
+function resetFx(){
+  $('#anomaly').classList.remove('on');
+  document.body.classList.remove('flick','rflick');
+  $('#logbox').classList.remove('frozen');
+}
+function shake(el){
+  if(!el.animate) return;
+  el.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:380});
+}
+function setHubMsg(t,alert){ const m=$('#hubmsg'); m.textContent=t; m.classList.toggle('alert',!!alert); }
+
+/* =============== NAVIGATION =============== */
+const enter={};
+function go(id){
+  if(id===current) return;
+  token++; const tk=token;
+  resetFx();
+  const app=$('#app');
+  app.classList.remove('tglitch'); void app.offsetWidth; app.classList.add('tglitch');
+  setTimeout(()=>app.classList.remove('tglitch'),420);
+  Snd.glitch(.35);
+  $('#'+current).classList.remove('active');
+  current=id;
+  document.body.classList.toggle('isfinal',id==='final');
+  P.mode=id==='final'?'final':'sys';
+  setTimeout(()=>{
+    if(tk!==token) return;
+    $('#'+id).classList.add('active');
+    if(enter[id]) enter[id](tk);
+  },200);
+}
+
+/* =============== BOOT =============== */
+enter.boot=async tk=>{
+  const L=$('#bootlog'); L.innerHTML='';
+  await sleep(900); if(tk!==token) return;
+  let el=await line(L,'INITIALIZING SYSTEM...',{speed:55,tk}); if(!el) return;
+  const steps=[
+    ['Establishing secure connection...','bar',1200],
+    ['Loading encrypted modules...','bar',1500],
+    ['Scanning environment...','ok'],
+    ['Searching database...','bar',1800],
+    ['Identity detected.','hit']
+  ];
+  for(const [t,kind,ms] of steps){
+    await sleep(420); if(tk!==token) return;
+    el=await line(L,t,{speed:24,tk}); if(!el) return;
+    if(kind==='bar'){
+      if(t.startsWith('Searching')) setTimeout(microGlitch,ms*.6);
+      if(!await bar(L,ms,tk)) return;
+    }else if(kind==='ok'){
+      const s=document.createElement('span'); s.className='ok'; s.textContent='  [ CLEAR ]'; el.appendChild(s);
+    }else{
+      el.classList.add('hit'); Snd.glitch(.6); microGlitch();
+    }
+  }
+  await sleep(900); if(tk!==token) return;
+  L.classList.add('out'); await sleep(700); if(tk!==token) return; L.hidden=true;
+
+  const idb=$('#bootid'); idb.hidden=false;
+  const s1=$('#bid1'); s1.textContent=''; s1.classList.add('typing');
+  const ok=await typeInto(s1,'SUBJECT IDENTIFIED',45,tk); s1.classList.remove('typing'); if(!ok) return;
+  await sleep(500); if(tk!==token) return;
+  $('#bid2').classList.add('on'); Snd.glitch(.8); microGlitch();
+  await sleep(2100); if(tk!==token) return;
+  idb.classList.add('out'); await sleep(700); if(tk!==token) return; idb.hidden=true;
+
+  const nm=$('#bootname'); nm.hidden=false; void nm.offsetWidth; nm.classList.add('reveal'); Snd.glitch(.5);
+  await sleep(2000); if(tk!==token) return;
+  nm.classList.add('distort'); Snd.glitch(1); microGlitch();
+  await sleep(950); nm.classList.remove('distort');
+  await sleep(1700); if(tk!==token) return;
+  go('hub');
+};
+
+/* =============== HUB =============== */
+enter.hub=tk=>{ setHubMsg(state.hubNote||'SELECT MODULE',false); state.hubNote=''; };
+
+function unlockFinal(){
+  const b=$('#btnFinal'); b.classList.remove('locked'); b.classList.add('ready'); $('#finalst').textContent='READY';
+}
+
+/* =============== FILE =============== */
+enter.file=async tk=>{
+  const vs=$$('#dossier .v'); vs.forEach(v=>v.textContent='');
+  const q=$('#fileq'); q.innerHTML='';
+  await sleep(500);
+  for(const v of vs){
+    if(tk!==token) return;
+    v.classList.add('typing');
+    const ok=await typeInto(v,v.dataset.v,32,tk);
+    v.classList.remove('typing'); if(!ok) return;
+    await sleep(150);
+  }
+  await sleep(500); if(tk!==token) return;
+  words(q,['“Some people enter your life quietly.','Somehow, they become impossible to ignore.”'],.17);
+};
+
+/* =============== LOGS =============== */
+const LOGS=[
+  ['21:07:12','Subject detected.'],
+  ['21:08:43','Attention redirected.'],
+  ['21:10:02','System behavior changed.'],
+  ['21:11:29','Repeated observation detected.'],
+  ['21:12:04','Reason: UNKNOWN.'],
+  ['21:13:55','Exception created.']
+];
+function setTrace(p){ $('#tracefill').style.width=(p*100)+'%'; $('#tracepct').textContent='TRACE '+Math.round(p*100)+'%'; }
+
+async function glitchEvent(tk,box){
+  const lines=$$('.ln',box).slice(-3);
+  const orig=lines.map(l=>l.innerHTML), txt=lines.map(l=>l.textContent);
+  const chars='▓▒░█▌▐#%&@$01<>/\\|';
+  const scr=s=>[...s].map(c=>(c===' '||c==='—')?c:(Math.random()<.4?chars[(Math.random()*chars.length)|0]:c)).join('');
+  const bail=()=>{resetFx();return false;};
+  Snd.glitch(1); document.body.classList.add('flick');
+  const t0=performance.now();
+  while(performance.now()-t0<1000){
+    if(tk!==token) return bail();
+    lines.forEach((l,i)=>{l.textContent=scr(txt[i]);});
+    await sleep(70);
+  }
+  document.body.classList.remove('flick');
+  box.classList.add('frozen');
+  await sleep(1300); if(tk!==token) return bail();
+  const an=$('#anomaly'),a2=$('#a2'); a2.textContent=''; an.classList.add('on'); Snd.glitch(1);
+  await sleep(1700); if(tk!==token) return bail();
+  a2.classList.add('typing');
+  const ok=await typeInto(a2,'This system was never designed for this.',55,tk);
+  a2.classList.remove('typing'); if(!ok) return bail();
+  await sleep(2400); if(tk!==token) return bail();
+  an.classList.remove('on');
+  lines.forEach((l,i)=>{l.innerHTML=orig[i];});
+  box.classList.remove('frozen');
+  const app=$('#app'); app.classList.remove('calm'); void app.offsetWidth; app.classList.add('calm');
+  setTimeout(()=>app.classList.remove('calm'),2600);
+  await sleep(1300);
+  return tk===token;
+}
+
+enter.logs=async tk=>{
+  const box=$('#logbox'), note=$('#lognote');
+  box.innerHTML=''; note.innerHTML=''; setTrace(0);
+  const first=!state.logsDone;
+  await sleep(400); if(tk!==token) return;
+  if(!await line(box,'> trace --subject RN-01 --depth full',{cls:'dim',speed:first?20:6,tk})) return;
+  for(let i=0;i<LOGS.length;i++){
+    await sleep(first?rnd(550,950):120); if(tk!==token) return;
+    const el=await logLine(box,LOGS[i][0],LOGS[i][1],first?24:6,tk); if(!el) return;
+    setTrace((i+1)/LOGS.length);
+    if(i===3 && !state.glitched){
+      const ok=await glitchEvent(tk,box); if(!ok) return;
+      state.glitched=true;
+    }
+  }
+  await sleep(first?1100:200); if(tk!==token) return;
+  note.innerHTML='<span class="lab">SYSTEM NOTE:</span><div class="note" id="notetxt"></div>';
+  words($('#notetxt'),['“There is only one exception.”'],.2);
+  await sleep(2600); if(tk!==token) return;
+  if(!state.logsDone){
+    state.logsDone=true; unlockFinal();
+    state.hubNote='TRACE COMPLETE. FINAL ACCESS UNLOCKED.';
+  }
+  const r=document.createElement('button'); r.className='ghost retbtn'; r.type='button'; r.dataset.go='hub'; r.textContent='[ RETURN ]';
+  note.appendChild(r);
+};
+
+/* =============== UNKNOWN SHELL =============== */
+const CMDS={
+  'help':['available: whoami  status  why  heartbeat','(not every command is listed.)'],
+  'whoami':['user  : visitor','owner : RN-01','note  : the owner has never logged in.','        the system runs anyway.'],
+  'status':['all modules ........ NOMINAL','one exception ...... ACTIVE'],
+  'why':['querying reason...','........','REASON: UNKNOWN','retry? the answer does not change.'],
+  'sudo raj':['[sudo] password for visitor: ********','visitor is not in the sudoers file.','raj outranks sudo. this incident will not be reported.'],
+  'nandani':['nandani: command not found','nandani: no such process','nandani: no substitute'],
+  'rn-01':['rn-01 -> alias for: RAJ NANDANI','(alias cannot be removed.)'],
+  'love':['keyword not recognized.','this system does not use that word.'],
+  'rm -rf':['nice try.','nothing here is deletable.']
+};
+let uchain=Promise.resolve();
+function runCmd(raw){
+  const tk=token, box=$('#ubox');
+  uchain=uchain.then(async()=>{
+    if(tk!==token) return;
+    const shown=raw.trim(); if(!shown) return;
+    const c=shown.toLowerCase().replace(/\s+/g,' ');
+    if(!await line(box,'visitor@rn01:~$ '+shown,{cls:'cmd',speed:6,tk})) return;
+    if(c==='clear'){ box.innerHTML=''; return; }
+    if(c==='exit'){ go('hub'); return; }
+    if(c==='heartbeat'){
+      Snd.beat();
+      await line(box,'▁▁▁▂▁▁▁▅█▃▁▁▁▂▃▂▁▁▁▁▅█▃▁▁',{speed:14,tk});
+      await line(box,'signal detected. source: not the system.',{speed:14,tk});
+      return;
+    }
+    const out=CMDS[c];
+    if(!out){ await line(box,c+': command not found',{cls:'dim',speed:10,tk}); return; }
+    for(const l of out){ if(tk!==token) return; await line(box,l,{speed:12,tk}); }
+  });
+}
+enter.unknown=async tk=>{
+  const box=$('#ubox'); box.innerHTML=''; uchain=Promise.resolve();
+  await sleep(400); if(tk!==token) return;
+  await line(box,'restricted shell v0.1 — unauthorized session',{cls:'dim',speed:12,tk});
+  await line(box,'type a command, or tap one below.',{cls:'dim',speed:12,tk});
+};
+
+/* =============== WARNING =============== */
+enter.warn=async tk=>{
+  const h=$('#warn1'),p=$('#warn2'),b=$('#warnbtns');
+  h.textContent=''; p.textContent=''; b.classList.remove('on');
+  await sleep(600); if(tk!==token) return;
+  h.classList.add('typing'); let ok=await typeInto(h,'WARNING',90,tk); h.classList.remove('typing'); if(!ok) return;
+  await sleep(500); if(tk!==token) return;
+  p.classList.add('typing');
+  ok=await typeInto(p,'You are about to access the only file this system was never supposed to contain.',48,tk);
+  p.classList.remove('typing'); if(!ok) return;
+  await sleep(700); if(tk!==token) return;
+  b.classList.add('on');
+};
+
+/* =============== FINAL =============== */
+const ecg={c:$('#ecg'),ctx:$('#ecg').getContext('2d'),W:300,H:120,buf:new Float32Array(300),phase:.1,acc:0,t:0,raf:0,speed:150,period:1.3};
+function wv(p){
+  const g=(c,w,a)=>a*Math.exp(-((p-c)*(p-c))/(2*w*w));
+  return g(.12,.03,.14)+g(.285,.009,-.14)+g(.31,.011,1)+g(.335,.012,-.32)+g(.55,.045,.26);
+}
+function sizeEcg(){
+  const r=ecg.c.getBoundingClientRect(), dpr=Math.min(2,devicePixelRatio||1);
+  ecg.W=Math.max(100,Math.floor(r.width)); ecg.H=Math.max(60,Math.floor(r.height));
+  ecg.c.width=ecg.W*dpr; ecg.c.height=ecg.H*dpr; ecg.ctx.setTransform(dpr,0,0,dpr,0,0);
+  ecg.buf=new Float32Array(ecg.W);
+}
+function ecgFrame(now){
+  if(current!=='final'){ ecg.raf=0; return; }
+  ecg.raf=requestAnimationFrame(ecgFrame);
+  const dt=Math.min(.05,(now-ecg.t)/1000); ecg.t=now;
+  ecg.acc+=ecg.speed*dt;
+  while(ecg.acc>=1){
+    ecg.acc-=1;
+    const prev=ecg.phase; ecg.phase+=1/(ecg.speed*ecg.period); if(ecg.phase>=1) ecg.phase-=1;
+    if(prev<.3 && ecg.phase>=.3) Snd.beat();
+    ecg.buf.copyWithin(0,1); ecg.buf[ecg.W-1]=wv(ecg.phase);
+  }
+  const {ctx,W,H,buf}=ecg, mid=H*.58, amp=H*.42;
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,W,0);
+  g.addColorStop(0,'rgba(255,42,69,0)'); g.addColorStop(.7,'rgba(255,42,69,.9)'); g.addColorStop(1,'rgba(255,120,130,1)');
+  ctx.strokeStyle=g; ctx.lineWidth=1.6; ctx.lineJoin='round'; ctx.shadowColor='rgba(255,30,60,.9)'; ctx.shadowBlur=10;
+  ctx.beginPath();
+  for(let i=0;i<W;i++){ const y=mid-buf[i]*amp; if(i) ctx.lineTo(i,y); else ctx.moveTo(i,y); }
+  ctx.stroke();
+  ctx.fillStyle='#ff7a88'; ctx.beginPath(); ctx.arc(W-1,mid-buf[W-1]*amp,2.2,0,6.2832); ctx.fill();
+}
+function startEcg(){
+  sizeEcg(); ecg.buf.fill(0); ecg.phase=.1; ecg.acc=0; ecg.t=performance.now();
+  if(ecg.raf) cancelAnimationFrame(ecg.raf);
+  ecg.raf=requestAnimationFrame(ecgFrame);
+}
+enter.final=async tk=>{
+  const nm=$('#fname'),q=$('#fquote'),sg=$('#fsig'),ex=$('#fexit'),ec=$('#ecg'),fn=$('#fnote');
+  [nm,sg,ec,ex].forEach(e=>e.classList.remove('on')); q.innerHTML=''; fn.textContent='';
+  await sleep(1500); if(tk!==token) return;
+  startEcg(); ec.classList.add('on');
+  await sleep(2800); if(tk!==token) return;
+  nm.classList.add('on');
+  await sleep(4000); if(tk!==token) return;
+  const dur=words(q,['I don’t really know when you became special.','I just know that somewhere along the way, you did.'],.2);
+  await sleep(dur*1000+800); if(tk!==token) return;
+  sg.classList.add('on');
+  await sleep(3500); if(tk!==token) return;
+  ex.classList.add('on');
+};
+
+/* =============== PARTICLES + PARALLAX =============== */
+const P={c:$('#pc'),ctx:$('#pc').getContext('2d'),w:0,h:0,dpr:1,list:[],mode:'sys',speed:1,alpha:1,tx:0,ty:0,px:0,py:0,t:0};
+function initP(){
+  const n=isMobile?55:110;
+  P.list=Array.from({length:n},()=>({x:Math.random(),y:Math.random(),z:rnd(.2,1),vx:rnd(-.008,.008),vy:rnd(-.03,-.006),red:Math.random()<.55}));
+}
+function sizeP(){
+  P.dpr=Math.min(2,devicePixelRatio||1);
+  P.w=innerWidth; P.h=innerHeight; P.c.width=P.w*P.dpr; P.c.height=P.h*P.dpr; P.ctx.setTransform(P.dpr,0,0,P.dpr,0,0);
+}
+function pFrame(now){
+  requestAnimationFrame(pFrame);
+  const dt=Math.min(.05,(now-P.t)/1000||0); P.t=now;
+  const fin=P.mode==='final';
+  P.speed+=((fin?.35:1)-P.speed)*Math.min(1,dt*2);
+  P.alpha+=((fin?.55:1)-P.alpha)*Math.min(1,dt*2);
+  P.px+=(P.tx-P.px)*.06; P.py+=(P.ty-P.py)*.06;
+  const root=document.documentElement.style;
+  root.setProperty('--px',P.px.toFixed(3)); root.setProperty('--py',P.py.toFixed(3));
+  const {ctx,w,h}=P; ctx.clearRect(0,0,w,h);
+  for(const p of P.list){
+    p.x+=p.vx*dt*P.speed; p.y+=p.vy*dt*P.speed;
+    if(p.y<-.02){p.y=1.02;p.x=Math.random();}
+    if(p.x<-.02)p.x=1.02; else if(p.x>1.02)p.x=-.02;
+    const x=p.x*w+P.px*p.z*22, y=p.y*h+P.py*p.z*14, r=p.z*(fin?1.1:1.5);
+    const a=(.12+p.z*.5)*P.alpha;
+    ctx.fillStyle=fin?'rgba(255,255,255,'+(a*.6).toFixed(3)+')':(p.red?'rgba(255,42,69,'+a.toFixed(3)+')':'rgba(200,200,200,'+(a*.5).toFixed(3)+')');
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill();
+  }
+}
+
+/* =============== NOISE =============== */
+const nctx=$('#noise').getContext('2d'), nimg=nctx.createImageData(96,96);
+function noise(){
+  const d=nimg.data;
+  for(let i=0;i<d.length;i+=4){ const v=(Math.random()*255)|0; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+  nctx.putImageData(nimg,0,0);
+}
+
+/* =============== EVENTS =============== */
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); }
+});
+document.addEventListener('pointerdown',e=>{ if(e.target.closest('button')) Snd.click(); });
+$('#skip').addEventListener('click',()=>go('hub'));
+$$('.mod').forEach(b=>b.addEventListener('click',()=>{
+  const a=b.dataset.act;
+  if(a==='final'){
+    if(!state.logsDone){ shake(b); Snd.glitch(.5); setHubMsg('ACCESS DENIED — TRACE INCOMPLETE. RUN: SYSTEM LOGS',true); return; }
+    go('warn'); return;
+  }
+  go(a);
+}));
+$('#proceed').addEventListener('click',()=>go('final'));
+$('#abort').addEventListener('click',()=>{ state.hubNote='ABORTED. THE FILE REMAINS.'; go('hub'); });
+$('#fexit').addEventListener('click',()=>{ state.hubNote='SESSION ENDED. FILE REMAINS OPEN.'; go('hub'); });
+$$('.chip').forEach(c=>c.addEventListener('click',()=>runCmd(c.dataset.cmd)));
+$('#uform').addEventListener('submit',e=>{ e.preventDefault(); const i=$('#uin'); runCmd(i.value); i.value=''; });
+$('#dossier').addEventListener('click',e=>{
+  const v=e.target.closest('.v.redact'); if(!v||!v.textContent) return;
+  v.textContent='ACCESS DENIED'; Snd.glitch(.3);
+  setTimeout(()=>{ if(v.textContent==='ACCESS DENIED') v.textContent=v.dataset.v; },1300);
+});
+let rnTaps=0,rnTimer=0;
+$('#rnTap').addEventListener('click',()=>{
+  rnTaps++; clearTimeout(rnTimer); rnTimer=setTimeout(()=>{rnTaps=0;},900);
+  if(rnTaps>=3){ rnTaps=0; microGlitch(); setHubMsg('HIDDEN COMMAND EXISTS IN [ UNKNOWN ]. TRY: sudo raj',true); }
+});
+$('#ecg').addEventListener('click',()=>{ ecg.phase=.2; });
+let noteTimer=0;
+$('#fsig').addEventListener('click',()=>{
+  ecg.phase=.2; const fn=$('#fnote'); fn.textContent='(it was never a serial number.)';
+  clearTimeout(noteTimer); noteTimer=setTimeout(()=>{fn.textContent='';},3500);
+});
+addEventListener('pointermove',e=>{ P.tx=(e.clientX/innerWidth-.5)*2; P.ty=(e.clientY/innerHeight-.5)*2; },{passive:true});
+addEventListener('resize',()=>{ sizeP(); if(current==='final') sizeEcg(); });
+
+const sndBtn=$('#snd');
+const revealSnd=()=>sndBtn.classList.add('show');
+addEventListener('pointerdown',revealSnd,{once:true});
+addEventListener('keydown',revealSnd,{once:true});
+sndBtn.addEventListener('click',()=>{
+  const on=Snd.toggle();
+  sndBtn.classList.toggle('on',on); sndBtn.setAttribute('aria-pressed',String(on));
+  sndBtn.textContent=on?'SOUND · ON':'SOUND · OFF';
+});
+
+/* =============== INIT =============== */
+sizeP(); initP(); noise();
+requestAnimationFrame(pFrame);
+setInterval(noise,90);
+setInterval(()=>{ $('#clock').textContent=new Date().toLocaleTimeString('en-GB'); },1000);
+(function rf(){ setTimeout(()=>{ if(current!=='final'&&current!=='boot') microGlitch(); rf(); },rnd(7000,16000)); })();
+enter.boot(0);
+})();
+</script>
 </body>
 </html>
