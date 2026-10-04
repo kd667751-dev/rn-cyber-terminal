@@ -10,7 +10,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@libsql/client": "^0.18.0",
-    "uuid": "^14.0.2"
+    "@libsql/client": "^0.18.0"
   }
 }
