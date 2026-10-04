@@ -99,8 +99,8 @@ module.exports = async (req, res) => {
       if (action === 'clean') {
         const now = Math.floor(Date.now() / 1000);
         await client.execute({
-          sql: "DELETE FROM access_codes WHERE expires_at < ? OR used_count >= max_uses",
-          args: [now]
+          sql: "DELETE FROM access_codes WHERE used_count >= max_uses",
+          args: []
         });
         return res.status(200).json({ success: true });
       }

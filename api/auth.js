@@ -32,35 +32,31 @@ module.exports = async (req, res) => {
     const record = rs.rows[0];
     const now = Math.floor(Date.now() / 1000);
 
-    if (record.expires_at < now) {
-      return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
-    }
-
+    // 1. If checking active session (startup/refresh)
     if (req.body.action === 'check') {
-      // Just verifying if it's still valid time-wise
+      if (record.expires_at < now) {
+        return res.status(401).json({ error: 'Session expired', valid: false });
+      }
       return res.status(200).json({ success: true, valid: true, expires_at: record.expires_at });
     }
 
+    // 2. If real login, check if they already have an active unexpired session
+    if (record.used_count > 0 && record.expires_at > now && record.expires_at < 2000000000) {
+      // Don't consume a use, just let them back into their active session
+      return res.status(200).json({ success: true, valid: true, expires_at: record.expires_at });
+    }
+
+    // 3. At this point, session is either brand new or expired. Check if uses remain.
     if (record.used_count >= record.max_uses) {
       return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
     }
 
-    let finalExpiresAt = record.expires_at;
-
-    if (record.used_count === 0 && req.body.action !== 'check') {
-      // FIRST USE! Start the timer now.
-      finalExpiresAt = now + ((record.duration_mins || 60) * 60);
-      await db.execute({
-        sql: "UPDATE access_codes SET used_count = 1, expires_at = ? WHERE code = ?",
-        args: [finalExpiresAt, code]
-      });
-    } else if (req.body.action !== 'check') {
-      // Just increment usage
-      await db.execute({
-        sql: "UPDATE access_codes SET used_count = used_count + 1 WHERE code = ?",
-        args: [code]
-      });
-    }
+    // 4. Start a new session and consume 1 use
+    const finalExpiresAt = now + ((record.duration_mins || 60) * 60);
+    await db.execute({
+      sql: "UPDATE access_codes SET used_count = used_count + 1, expires_at = ? WHERE code = ?",
+      args: [finalExpiresAt, code]
+    });
 
     return res.status(200).json({ success: true, valid: true, expires_at: finalExpiresAt });
   } catch (error) {
