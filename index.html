@@ -854,7 +854,23 @@ function startApp() {
 }
 
 if (savedCode) {
-  startApp();
+  // Verify session is still valid
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ code: savedCode, action: 'check' })
+  }).then(r => r.json()).then(data => {
+    if (data.valid) {
+      startApp();
+    } else {
+      localStorage.removeItem('rn01_session');
+      location.reload();
+    }
+  }).catch(() => {
+    // If offline or error, we might let them in or block. Let's block for strict security.
+    localStorage.removeItem('rn01_session');
+    location.reload();
+  });
 } else {
   const inp = $('#accessCode');
   const err = $('#gateError');

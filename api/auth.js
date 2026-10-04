@@ -30,6 +30,12 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: 'ACCESS DENIED: Code has expired.', valid: false });
     }
 
+    if (req.body.action === 'check') {
+      // Just verifying if it's still valid time-wise (we ignore usage limit for checking an already active session, OR we can check it too)
+      // Actually, if it's expired time-wise, block it.
+      return res.status(200).json({ success: true, valid: true });
+    }
+
     if (record.used_count >= record.max_uses) {
       return res.status(401).json({ error: 'ACCESS DENIED: Code usage limit exceeded.', valid: false });
     }
