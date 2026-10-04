@@ -31,21 +31,22 @@ module.exports = async (req, res) => {
     }
 
     if (req.body.action === 'check') {
-      // Just verifying if it's still valid time-wise (we ignore usage limit for checking an already active session, OR we can check it too)
-      // Actually, if it's expired time-wise, block it.
-      return res.status(200).json({ success: true, valid: true });
+      // Just verifying if it's still valid time-wise
+      return res.status(200).json({ success: true, valid: true, expires_at: record.expires_at });
     }
 
     if (record.used_count >= record.max_uses) {
       return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
     }
 
+    let finalExpiresAt = record.expires_at;
+
     if (record.used_count === 0 && req.body.action !== 'check') {
       // FIRST USE! Start the timer now.
-      const newExpiresAt = now + ((record.duration_mins || 60) * 60);
+      finalExpiresAt = now + ((record.duration_mins || 60) * 60);
       await db.execute({
         sql: "UPDATE access_codes SET used_count = 1, expires_at = ? WHERE code = ?",
-        args: [newExpiresAt, code]
+        args: [finalExpiresAt, code]
       });
     } else if (req.body.action !== 'check') {
       // Just increment usage
@@ -55,7 +56,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ success: true, valid: true });
+    return res.status(200).json({ success: true, valid: true, expires_at: finalExpiresAt });
   } catch (error) {
     console.error("Auth error:", error);
     // If DB is not configured, we might want to let them in or block them.

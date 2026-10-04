@@ -842,6 +842,22 @@ sndBtn.addEventListener('click',()=>{
 /* =============== AUTH GATE =============== */
 const savedCode = localStorage.getItem('rn01_session');
 
+
+function setupHiddenTimer(expiresAtUnix) {
+  if (!expiresAtUnix || expiresAtUnix > 2000000000) return; // No timer if not set or pending
+  const now = Math.floor(Date.now() / 1000);
+  const remainingSeconds = expiresAtUnix - now;
+  if (remainingSeconds <= 0) {
+    localStorage.removeItem('rn01_session');
+    location.reload();
+  } else {
+    setTimeout(() => {
+      localStorage.removeItem('rn01_session');
+      location.reload();
+    }, remainingSeconds * 1000);
+  }
+}
+
 function startApp() {
   $('#gate').style.display = 'none';
   $('#app').style.display = 'block';
@@ -861,6 +877,7 @@ if (savedCode) {
     body: JSON.stringify({ code: savedCode, action: 'check' })
   }).then(r => r.json()).then(data => {
     if (data.valid) {
+      setupHiddenTimer(data.expires_at);
       startApp();
     } else {
       localStorage.removeItem('rn01_session');
@@ -908,6 +925,7 @@ if (savedCode) {
       }
       if (data.valid) {
         localStorage.setItem('rn01_session', code);
+        setupHiddenTimer(data.expires_at);
         startApp();
       } else {
         err.textContent = data.error || 'ACCESS DENIED';
