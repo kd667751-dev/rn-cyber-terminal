@@ -54,6 +54,13 @@
     <button onclick="logout()" style="float: right;">Logout</button>
     <p>Authentication Confirmed. Welcome Admin.</p>
     
+    
+    <div class="panel" style="border-color: var(--red2);">
+      <h3 style="color: var(--red2);">Master Override (System Operations)</h3>
+      <p style="font-size: 0.9rem; margin-bottom:10px;">Current Global State: <strong id="sysModeLbl" style="letter-spacing:0.2em;">LOADING...</strong></p>
+      <button onclick="resetMode()" style="background: transparent; border: 1px solid var(--red2); color: var(--red2); padding: 8px 15px;">RESTORE RN MODE (NORMAL)</button>
+    </div>
+
     <div class="panel">
       <h3>Generate Access Code</h3>
       <div class="form-group">
@@ -68,7 +75,11 @@
         <label>Max Uses Allowed:</label>
         <input type="number" id="maxUses" value="1" min="1">
       </div>
-      <button onclick="generateCode()">Generate Code</button>
+            <div class="form-group" style="display:flex; align-items:center; gap: 10px;">
+        <input type="checkbox" id="gameOnExpiry" style="width: auto; margin:0;">
+        <label for="gameOnExpiry" style="margin:0; cursor:pointer;">Trigger FLAPPY BIRD on Code Expiry</label>
+      </div>
+      <button onclick="generateCode()" style="margin-top:15px;">Generate Code</button>
       <div id="gen-msg" class="msg"></div>
     </div>
 
@@ -83,6 +94,7 @@
             <th>Expires</th>
             <th>Uses</th>
             <th>Status</th>
+            <th>Game?</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -183,6 +195,13 @@
       return;
     }
 
+        
+    const sysModeLbl = document.getElementById('sysModeLbl');
+    if (sysModeLbl && data.systemMode) {
+      sysModeLbl.innerText = data.systemMode.toUpperCase();
+      sysModeLbl.style.color = data.systemMode === 'flappy' ? '#ffaa00' : 'var(--red2)';
+    }
+
     data.codes.forEach(c => {
       const isPending = c.used_count === 0 && c.expires_at > 2000000000;
       const isUsedUp = c.used_count >= c.max_uses;
@@ -214,10 +233,21 @@
         <td>${expDate}</td>
         <td>${c.used_count} / ${c.max_uses}</td>
         <td>${status}</td>
+        <td>${c.game_on_expiry ? 'Yes' : 'No'}</td>
         <td><button class="danger" onclick="deleteCode('${c.code}')">Del</button></td>
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  
+  async function resetMode() {
+    if (!confirm('Are you sure you want to restore the system to NORMAL mode?')) return;
+    const data = await req('POST', { action: 'reset_mode' });
+    if (data.success) {
+      alert('System restored successfully.');
+      loadCodes();
+    }
   }
 
   async function generateCode() {
@@ -225,7 +255,8 @@
     const durationHours = document.getElementById('duration').value;
     const maxUses = document.getElementById('maxUses').value;
     
-    const data = await req('POST', { action: 'create', customCode, durationMinutes: durationHours, maxUses });
+    const gameOnExpiry = document.getElementById('gameOnExpiry').checked;
+    const data = await req('POST', { action: 'create', customCode, durationMinutes: durationHours, maxUses, gameOnExpiry });
     if (data.success) {
       document.getElementById('gen-msg').innerText = `Success! Code generated: ${data.code}`;
       document.getElementById('customCode').value = '';

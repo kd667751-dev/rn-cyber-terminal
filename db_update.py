@@ -1,21 +1,9 @@
-const { createClient } = require('@libsql/client');
+import re
 
-let client = null;
+with open('api/db.js', 'r') as f:
+    js = f.read()
 
-function getDb() {
-  if (!client) {
-    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-      throw new Error("Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN environment variables.");
-    }
-    client = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-  }
-  return client;
-}
-
-async function initDb() {
+new_init = """async function initDb() {
   const db = getDb();
   await db.execute(`
     CREATE TABLE IF NOT EXISTS access_codes (
@@ -46,7 +34,10 @@ async function initDb() {
   try {
     await db.execute("ALTER TABLE access_codes ADD COLUMN game_on_expiry INTEGER DEFAULT 0");
   } catch(e) {}
-}
+}"""
 
+# regex replace the entire initDb function
+js = re.sub(r'async function initDb\(\) \{.*\} // Ignore if column already exists\n\}', new_init + '\n', js, flags=re.DOTALL)
 
-module.exports = { getDb, initDb };
+with open('api/db.js', 'w') as f:
+    f.write(js)
