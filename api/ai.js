@@ -49,14 +49,14 @@ module.exports = async (req, res) => {
     // 3. Call Groq API
     const systemPrompt = "You are a highly classified, advanced Artificial Intelligence embedded within a restricted cyber-terminal. You are speaking to an authorized user named Raj Nandani. Your tone is cold, professional, mysterious, and hacker-like. Keep your responses relatively concise (under 3 sentences unless complex explanation is needed). DO NOT use emojis. DO NOT act like a typical cheerful AI.";
     
-    // Auto-detect available Groq model
-    let modelId = 'llama3-8b-8192';
+    // Auto-detect available Groq model prioritizing Qwen (doesn't require Meta's terms acceptance)
+    let modelId = 'qwen-2.5-32b';
     try {
       const mRes = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${groqKey}` } });
       if (mRes.ok) {
         const mData = await mRes.json();
         if (mData.data && mData.data.length > 0) {
-          const pref = mData.data.find(m => m.id.includes('llama-3.3') || m.id.includes('llama-3.1') || m.id.includes('llama3'));
+          const pref = mData.data.find(m => m.id.toLowerCase().includes('qwen'));
           modelId = pref ? pref.id : mData.data[0].id;
         }
       }
