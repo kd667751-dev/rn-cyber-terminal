@@ -60,7 +60,8 @@ module.exports = async (req, res) => {
         const stateRs = await client.execute("SELECT mode FROM system_state WHERE id = '1'");
         const sysMode = stateRs.rows.length > 0 ? stateRs.rows[0].mode : 'normal';
         const rs = await client.execute("SELECT * FROM access_codes ORDER BY created_at DESC");
-        return res.status(200).json({ codes: rs.rows, systemMode: sysMode });
+        const logRs = await client.execute("SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT 50");
+        return res.status(200).json({ codes: rs.rows, systemMode: sysMode, activityLog: logRs.rows });
       } catch(e) {
         return res.status(500).json({ error: 'DB READ ERROR: ' + e.message });
       }
@@ -109,6 +110,11 @@ module.exports = async (req, res) => {
           sql: "DELETE FROM access_codes WHERE used_count >= max_uses",
           args: []
         });
+        return res.status(200).json({ success: true });
+      }
+
+      if (action === 'clear_log') {
+        await client.execute("DELETE FROM activity_log");
         return res.status(200).json({ success: true });
       }
 

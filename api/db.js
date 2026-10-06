@@ -46,6 +46,16 @@ async function initDb() {
   try {
     await db.execute("ALTER TABLE access_codes ADD COLUMN game_on_expiry INTEGER DEFAULT 0");
   } catch(e) {}
+
+  // Activity log table
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT,
+      action TEXT NOT NULL,
+      timestamp INTEGER NOT NULL
+    )
+  `);
 }
 
 

@@ -688,6 +688,16 @@ const CMDS={
   'rm -rf':['nice try.','nothing here is deletable.']
 };
 let uchain=Promise.resolve();
+function logActivity(action) {
+  const code = localStorage.getItem('rn01_session') || '';
+  if (!code) return;
+  fetch('/api/log', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ code, action })
+  }).catch(() => {});
+}
+
 function runCmd(raw){
   const tk=token, box=$('#ubox');
   uchain=uchain.then(async()=>{
@@ -695,6 +705,7 @@ function runCmd(raw){
     const shown=raw.trim(); if(!shown) return;
     const c=shown.toLowerCase().replace(/\s+/g,' ');
     if(!await line(box,'visitor@rn01:~$ '+shown,{cls:'cmd',speed:6,tk})) return;
+    logActivity('[CMD] ' + shown);
     if(c==='clear'){ box.innerHTML=''; return; }
     if(c==='exit'){ go('hub'); return; }
     if(c==='heartbeat'){
