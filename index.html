@@ -896,6 +896,10 @@ function initFlappyBird() {
       let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.speed * 0.1)));
       if (state.current === state.getReady) rotation = 0;
       ctx.rotate(rotation);
+      
+      // Flip horizontally so the bird faces right instead of left
+      ctx.scale(-1, 1);
+      
       ctx.font = "30px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
