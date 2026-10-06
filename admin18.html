@@ -165,7 +165,7 @@
   }
 
   async function req(action, body = {}) {
-    const activeToken = localStorage.getItem('rn01_admin_auth');
+    const activeToken = localStorage.getItem('rn01_admin_token');
     if (!activeToken) { logout(); return { success: false }; }
     
     const res = await fetch('/api/admin', {
