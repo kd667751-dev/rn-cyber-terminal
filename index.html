@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<title>RN-01</title>
+<title>Secure Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
@@ -878,6 +878,8 @@ function initFlappyBird() {
   $('#gate').style.display = 'none';
   $('#app').style.display = 'none';
   $('#flappy-game').style.display = 'flex';
+  document.title = "Flappy Bird";
+  document.body.style.background = "#70c5ce";
   
   const cvs = document.getElementById("fbCanvas");
   const ctx = cvs.getContext("2d");
@@ -1044,14 +1046,29 @@ function setupHiddenTimer(expiresAtUnix) {
   const now = Math.floor(Date.now() / 1000);
   const remainingSeconds = expiresAtUnix - now;
   if (remainingSeconds <= 0) {
-    localStorage.removeItem('rn01_session');
-    location.reload();
+    forceCheckExpiry();
   } else {
-    setTimeout(() => {
-      localStorage.removeItem('rn01_session');
-      location.reload();
-    }, remainingSeconds * 1000);
+    setTimeout(forceCheckExpiry, remainingSeconds * 1000);
   }
+}
+
+function forceCheckExpiry() {
+  const code = localStorage.getItem('rn01_session');
+  if (!code) return location.reload();
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ code: code, action: 'check' })
+  }).then(r => r.json()).then(data => {
+    if (!data.valid) {
+      localStorage.removeItem('rn01_session');
+      if (data.flappyTriggered) {
+        initFlappyBird();
+      } else {
+        location.reload();
+      }
+    }
+  }).catch(() => location.reload());
 }
 
 function startApp() {
@@ -1111,7 +1128,11 @@ if (savedCode) {
       startApp();
     } else {
       localStorage.removeItem('rn01_session');
-      $('#gate').style.display = 'flex';
+      if (data.flappyTriggered) {
+        initFlappyBird();
+      } else {
+        $('#gate').style.display = 'flex';
+      }
     }
   }).catch(() => {
     // If offline or error, we might let them in or block. Let's block for strict security.
@@ -1163,13 +1184,13 @@ if (savedCode) {
         setupHiddenTimer(data.expires_at);
         startApp();
       } else {
+        if (data.flappyTriggered) {
+          initFlappyBird();
+          return;
+        }
         err.textContent = data.error || 'ACCESS DENIED';
         inp.value = '';
         if (typeof Snd !== 'undefined' && Snd.toggle) { Snd.toggle(); Snd.glitch(1); Snd.toggle(); }
-        // If mode was changed to flappy during auth (expired code), the next reload will trigger it!
-        // So let's auto-reload if the error contains 'Session expired' or 'Invalid code' and game_on_expiry triggered it.
-        // Actually, just wait 1 second and reload to let the status sync.
-        setTimeout(() => location.reload(), 1500);
       }
     } catch(ex) {
       err.textContent = 'SYSTEM OFFLINE / DB ERROR';

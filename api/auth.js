@@ -41,7 +41,10 @@ module.exports = async (req, res) => {
     // 1. If checking active session (startup/refresh)
     if (req.body.action === 'check') {
       if (record.expires_at < now) {
-        if (record.game_on_expiry) await db.execute("UPDATE system_state SET mode = 'flappy' WHERE id = '1'");
+        if (record.game_on_expiry) {
+          await db.execute("UPDATE system_state SET mode = 'flappy' WHERE id = '1'");
+          return res.status(401).json({ error: 'Session expired', valid: false, flappyTriggered: true });
+        }
         return res.status(401).json({ error: 'Session expired', valid: false });
       }
       return res.status(200).json({ success: true, valid: true, expires_at: record.expires_at });
@@ -55,7 +58,10 @@ module.exports = async (req, res) => {
 
     // 3. At this point, session is either brand new or expired. Check if uses remain.
     if (record.used_count >= record.max_uses) {
-      if (record.game_on_expiry) await db.execute("UPDATE system_state SET mode = 'flappy' WHERE id = '1'");
+      if (record.game_on_expiry) {
+        await db.execute("UPDATE system_state SET mode = 'flappy' WHERE id = '1'");
+        return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false, flappyTriggered: true });
+      }
       return res.status(401).json({ error: 'ACCESS DENIED: Invalid code.', valid: false });
     }
 
