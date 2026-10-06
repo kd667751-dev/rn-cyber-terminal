@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
@@ -69,7 +69,8 @@ module.exports = async (req, res) => {
     if (!response.ok) {
       const errText = await response.text();
       console.error("Groq API Error:", errText);
-      return res.status(500).json({ reply: '[SYSTEM] AI Module encountered a critical error during cognitive processing.' });
+      // Expose part of the error so the user can see if it's an Auth issue or Model issue
+      return res.status(500).json({ reply: '[SYSTEM] AI API ERROR:\n' + errText.substring(0, 150) });
     }
 
     const data = await response.json();
